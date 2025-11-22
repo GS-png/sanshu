@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { useMessage } from 'naive-ui'
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { setupExitWarningListener } from '../composables/useExitWarning'
 import { useKeyboard } from '../composables/useKeyboard'
 import { useVersionCheck } from '../composables/useVersionCheck'
+import { useAcemcpSync } from '../composables/useAcemcpSync'
+import { useMcpToolsReactive } from '../composables/useMcpTools'
 import UpdateModal from './common/UpdateModal.vue'
 import LayoutWrapper from './layout/LayoutWrapper.vue'
 import McpPopup from './popup/McpPopup.vue'
 import PopupHeader from './popup/PopupHeader.vue'
+import McpIndexStatusDrawer from './popup/McpIndexStatusDrawer.vue'
 
 interface AppConfig {
   theme: string
@@ -58,6 +61,8 @@ const { versionInfo, showUpdateModal } = useVersionCheck()
 
 // 弹窗中的设置显示控制
 const showPopupSettings = ref(false)
+// MCP 索引详情抽屉显示控制
+const showIndexDrawer = ref(false)
 
 // 初始化 Naive UI 消息实例
 const message = useMessage()
@@ -65,9 +70,56 @@ const message = useMessage()
 // 键盘快捷键处理
 const { handleExitShortcut } = useKeyboard()
 
+// MCP 工具与索引状态
+const {
+  mcpTools,
+  loadMcpTools,
+} = useMcpToolsReactive()
+
+const {
+  currentProjectStatus,
+  statusSummary,
+  statusIcon,
+  isIndexing,
+  triggerIndexUpdate,
+} = useAcemcpSync()
+
+// 记录重新同步按钮的本地 loading 状态
+const resyncLoading = ref(false)
+
+// 是否启用 sou 代码搜索工具
+const souEnabled = computed(() => mcpTools.value.some(tool => tool.id === 'sou' && tool.enabled))
+
+// Header 中是否需要展示 MCP 索引状态指示器
+const showMcpIndexStatus = computed(() => {
+  return souEnabled.value
+    && !!props.mcpRequest?.project_root_path
+    && !!currentProjectStatus.value
+})
+
 // 切换弹窗设置显示
 function togglePopupSettings() {
   showPopupSettings.value = !showPopupSettings.value
+}
+
+// 处理索引详情抽屉中的重新同步请求
+async function handleIndexResync() {
+  if (!props.mcpRequest?.project_root_path || resyncLoading.value)
+    return
+
+  resyncLoading.value = true
+  try {
+    // 调用索引更新命令，并依赖 useAcemcpSync 轮询结果刷新状态
+    const result = await triggerIndexUpdate(props.mcpRequest.project_root_path)
+    message.success(typeof result === 'string' ? result : '索引更新已触发')
+  }
+  catch (error) {
+    console.error('触发索引更新失败:', error)
+    message.error(`触发索引更新失败: ${String(error)}`)
+  }
+  finally {
+    resyncLoading.value = false
+  }
 }
 
 // 监听 MCP 请求变化，当有新请求时重置设置页面状态
@@ -91,6 +143,9 @@ onMounted(() => {
 
   // 添加全局键盘事件监听器
   document.addEventListener('keydown', handleGlobalKeydown)
+
+  // 加载 MCP 工具配置（用于检测 sou 是否启用）
+  loadMcpTools()
 })
 
 onUnmounted(() => {
@@ -113,9 +168,14 @@ onUnmounted(() => {
           :loading="false"
           :show-main-layout="showPopupSettings"
           :always-on-top="props.appConfig.window.alwaysOnTop"
+          :mcp-enabled="showMcpIndexStatus"
+          :mcp-status-summary="statusSummary"
+          :mcp-status-icon="statusIcon"
+          :mcp-is-indexing="isIndexing"
           @theme-change="$emit('themeChange', $event)"
           @open-main-layout="togglePopupSettings"
           @toggle-always-on-top="$emit('toggleAlwaysOnTop')"
+          @open-index-status="showIndexDrawer = true"
         />
       </div>
 
@@ -145,6 +205,20 @@ onUnmounted(() => {
         @response="$emit('mcpResponse', $event)"
         @cancel="$emit('mcpCancel')"
         @theme-change="$emit('themeChange', $event)"
+      />
+
+      <!-- MCP 代码索引详情抽屉 -->
+      <McpIndexStatusDrawer
+        v-if="props.mcpRequest?.project_root_path"
+        :show="showIndexDrawer"
+        :project-root="props.mcpRequest.project_root_path"
+        :status-summary="statusSummary"
+        :status-icon="statusIcon"
+        :project-status="currentProjectStatus"
+        :is-indexing="isIndexing"
+        :resync-loading="resyncLoading"
+        @update:show="showIndexDrawer = $event"
+        @resync="handleIndexResync"
       />
     </div>
 

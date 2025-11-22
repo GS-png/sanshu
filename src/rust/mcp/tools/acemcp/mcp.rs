@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rmcp::{model::*, Error as McpError};
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -16,7 +16,16 @@ use serde::{Deserialize, Serialize};
 use encoding_rs::{GBK, WINDOWS_1252, UTF_8};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 
-use super::types::{AcemcpRequest, AcemcpConfig, ProjectIndexStatus, ProjectsIndexStatus, IndexStatus};
+use super::types::{
+    AcemcpRequest,
+    AcemcpConfig,
+    ProjectIndexStatus,
+    ProjectsIndexStatus,
+    IndexStatus,
+    ProjectFilesStatus,
+    FileIndexStatus,
+    FileIndexStatusKind,
+};
 use crate::log_debug;
 use crate::log_important;
 
@@ -163,6 +172,51 @@ impl AcemcpTool {
     /// 获取所有项目的索引状态（供 Tauri 命令调用）
     pub fn get_all_index_status() -> ProjectsIndexStatus {
         load_projects_status()
+    }
+
+    /// 获取项目内所有可索引文件的索引状态（供 Tauri 命令调用）
+    pub async fn get_project_files_status(project_root_path: String) -> anyhow::Result<ProjectFilesStatus> {
+        // 读取 Acemcp 配置，主要用于获取扩展名、排除规则和分块行数
+        let acemcp_config = Self::get_acemcp_config().await?;
+        let max_lines = acemcp_config.max_lines_per_blob.unwrap_or(800) as usize;
+        let text_exts = acemcp_config.text_extensions.clone().unwrap_or_default();
+        let exclude_patterns = acemcp_config.exclude_patterns.clone().unwrap_or_default();
+
+        // 读取 projects.json，获取已索引的 blob 名称集合
+        let projects_path = home_projects_file();
+        let projects: ProjectsFile = if projects_path.exists() {
+            let data = fs::read_to_string(&projects_path).unwrap_or_default();
+            serde_json::from_str(&data).unwrap_or_default()
+        } else {
+            ProjectsFile::default()
+        };
+
+        let normalized_root = PathBuf::from(&project_root_path)
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(&project_root_path))
+            .to_string_lossy()
+            .replace('\\', "/");
+
+        let existing_blob_names: std::collections::HashSet<String> = projects
+            .0
+            .get(&normalized_root)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .collect();
+
+        let files = collect_file_statuses(
+            &project_root_path,
+            &text_exts,
+            &exclude_patterns,
+            max_lines,
+            &existing_blob_names,
+        )?;
+
+        Ok(ProjectFilesStatus {
+            project_root: normalized_root,
+            files,
+        })
     }
 
     /// 获取acemcp配置
@@ -628,6 +682,126 @@ fn collect_blobs(root: &str, text_exts: &[String], exclude_patterns: &[String], 
     
     log_important!(info, "文件收集完成: 扫描文件数={}, 索引文件数={}, 生成blobs数={}, 排除文件/目录数={}", scanned_files, indexed_files, out.len(), excluded_count);
     Ok(out)
+}
+
+/// 收集项目内所有可索引文件的索引状态
+///
+/// 为避免引入新的持久化结构，这里通过重新扫描文件并复用与索引阶段相同的
+/// 路径规范化与分块逻辑，基于现有的 blob 哈希集合判断文件是否“已完全索引”。
+fn collect_file_statuses(
+    root: &str,
+    text_exts: &[String],
+    exclude_patterns: &[String],
+    max_lines_per_blob: usize,
+    existing_blob_names: &HashSet<String>,
+) -> anyhow::Result<Vec<FileIndexStatus>> {
+    let root_path = PathBuf::from(root);
+    if !root_path.exists() {
+        anyhow::bail!("项目根目录不存在: {}", root);
+    }
+
+    // 构建排除模式的 GlobSet
+    let exclude_globset = if exclude_patterns.is_empty() {
+        None
+    } else {
+        match build_exclude_globset(exclude_patterns) {
+            Ok(gs) => Some(gs),
+            Err(e) => {
+                log_debug!("构建排除模式失败，将使用简单匹配: {}", e);
+                None
+            }
+        }
+    };
+
+    let gitignore = build_gitignore(&root_path);
+    let mut dirs_stack = vec![root_path.clone()];
+    let mut files_status = Vec::new();
+
+    while let Some(dir) = dirs_stack.pop() {
+        let entries = match fs::read_dir(&dir) {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+
+        for entry in entries.flatten() {
+            let p = entry.path();
+
+            // .gitignore 过滤
+            if let Some(gi) = &gitignore {
+                if gi.matched_path_or_any_parents(&p, p.is_dir()).is_ignore() {
+                    continue;
+                }
+            }
+
+            if p.is_dir() {
+                if should_exclude(&p, &root_path, exclude_globset.as_ref()) {
+                    continue;
+                }
+                dirs_stack.push(p);
+                continue;
+            }
+
+            if should_exclude(&p, &root_path, exclude_globset.as_ref()) {
+                continue;
+            }
+
+            // 扩展名过滤
+            let ext_ok = p
+                .extension()
+                .and_then(|s| s.to_str())
+                .map(|e| {
+                    let dot = format!(".{}", e).to_lowercase();
+                    text_exts.iter().any(|te| te.eq_ignore_ascii_case(&dot))
+                })
+                .unwrap_or(false);
+
+            if !ext_ok {
+                continue;
+            }
+
+            let rel = p
+                .strip_prefix(&root_path)
+                .unwrap_or(&p)
+                .to_string_lossy()
+                .replace('\\', "/");
+
+            // 读取文件内容并根据分块结果计算 blob 哈希
+            if let Some(content) = read_file_with_encoding(&p) {
+                let blobs = split_content(&rel, &content, max_lines_per_blob);
+                if blobs.is_empty() {
+                    continue;
+                }
+
+                let mut all_indexed = true;
+                for blob in &blobs {
+                    let hash = sha256_hex(&blob.path, &blob.content);
+                    if !existing_blob_names.contains(&hash) {
+                        all_indexed = false;
+                        break;
+                    }
+                }
+
+                let status = if all_indexed {
+                    FileIndexStatusKind::Indexed
+                } else {
+                    FileIndexStatusKind::Pending
+                };
+
+                files_status.push(FileIndexStatus {
+                    path: rel.clone(),
+                    status,
+                });
+            } else {
+                // 无法读取内容时，保守地标记为 Pending，避免静默丢失
+                files_status.push(FileIndexStatus {
+                    path: rel.clone(),
+                    status: FileIndexStatusKind::Pending,
+                });
+            }
+        }
+    }
+
+    Ok(files_status)
 }
 
 /// 只执行索引更新，不进行搜索

@@ -22,3 +22,16 @@ export interface ProjectIndexStatus {
 export interface ProjectsIndexStatus {
   projects: Record<string, ProjectIndexStatus>
 }
+
+// Acemcp 文件级索引状态类型定义
+export type FileIndexStatusType = 'indexed' | 'pending'
+
+export interface FileIndexStatus {
+  path: string
+  status: FileIndexStatusType
+}
+
+export interface ProjectFilesStatus {
+  project_root: string
+  files: FileIndexStatus[]
+}

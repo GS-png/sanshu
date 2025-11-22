@@ -1,8 +1,8 @@
 use tauri::{AppHandle, State};
 
 use crate::config::{AppState, save_config};
-use super::{AcemcpTool};
-use super::types::{AcemcpRequest, ProjectIndexStatus, ProjectsIndexStatus};
+use super::AcemcpTool;
+use super::types::{AcemcpRequest, ProjectIndexStatus, ProjectsIndexStatus, ProjectFilesStatus};
 use reqwest;
 
 #[derive(Debug, serde::Deserialize)]
@@ -381,6 +381,16 @@ pub fn get_acemcp_index_status(project_root_path: String) -> Result<ProjectIndex
 #[tauri::command]
 pub fn get_all_acemcp_index_status() -> Result<ProjectsIndexStatus, String> {
     Ok(AcemcpTool::get_all_index_status())
+}
+
+/// 获取指定项目内所有可索引文件的索引状态，用于前端构建文件树
+#[tauri::command]
+pub async fn get_acemcp_project_files_status(
+    project_root_path: String,
+) -> Result<ProjectFilesStatus, String> {
+    AcemcpTool::get_project_files_status(project_root_path)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// 手动触发索引更新

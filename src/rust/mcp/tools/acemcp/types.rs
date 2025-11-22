@@ -97,3 +97,31 @@ pub struct ProjectsIndexStatus {
     /// 项目路径 -> 索引状态
     pub projects: HashMap<String, ProjectIndexStatus>,
 }
+
+/// 单个文件的索引状态
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum FileIndexStatusKind {
+    /// 文件已完成索引（所有 blob 均已上传并记录）
+    Indexed,
+    /// 文件已被纳入候选集合但尚未全部完成索引或需要重新上传
+    Pending,
+}
+
+/// 文件索引状态信息
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileIndexStatus {
+    /// 相对于项目根目录的文件路径，使用正斜杠(/)分隔
+    pub path: String,
+    /// 文件索引状态
+    pub status: FileIndexStatusKind,
+}
+
+/// 项目内所有可索引文件的状态集合（用于前端构建项目结构树）
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ProjectFilesStatus {
+    /// 项目根路径（规范化后）
+    pub project_root: String,
+    /// 文件状态列表
+    pub files: Vec<FileIndexStatus>,
+}
