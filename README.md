@@ -1,39 +1,90 @@
+<div align="center">
+
 # 三术 / sanshu
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
+[![MCP](https://img.shields.io/badge/protocol-MCP-green.svg)](https://modelcontextprotocol.io/)
 
 > **道生一，一生二，二生三，三生万物**
 
-三术 (sanshu) 是一个集成了 **智 (zhi)**、**记 (ji)**、**搜 (sou)** 三大核心能力的 AI 辅助编程增强系统。它通过 MCP (Model Context Protocol) 协议与 AI 助手深度协同，实现了从被动应答到主动协作的范式转变。
+*智 · 记 · 搜 —— AI 辅助编程增强系统*
+
+[功能特性](#-核心功能) •
+[快速开始](#-安装与使用) •
+[技术架构](#️-技术架构) •
+[贡献指南](#-贡献指南) •
+[许可证](#-许可证)
+
+</div>
+
+---
+
+## 📖 简介
+
+**三术 (sanshu)** 是一个集成了 **智 (zhi)**、**记 (ji)**、**搜 (sou)** 三大核心能力的 AI 辅助编程增强系统。它通过 MCP (Model Context Protocol) 协议与 AI 助手深度协同，实现了从被动应答到主动协作的范式转变。
+
+---
+
+## 📑 目录
+
+- [核心功能](#-核心功能)
+- [核心特性与流程](#-核心特性与流程)
+- [与 Augment Ace 的协同](#-与-augment-ace-的协同)
+- [版本发布流程](#-版本发布流程)
+- [技术架构](#️-技术架构)
+- [安装与使用](#-安装与使用)
+- [哲学理念](#️-哲学理念)
+- [贡献指南](#-贡献指南)
+- [许可证](#-许可证)
+- [致谢](#-致谢)
+
+---
 
 ## 🌟 核心功能
 
 三术由三个相辅相成的核心工具组成：
 
-### 1. zhi (智/审) - 智能代码审查与交互
-**"审时度势，智在必行"**
-- **交互式决策**：通过 MCP 弹窗主动询问用户意图，避免 AI 自作主张。
-- **多模态输入**：支持文本、图片、预定义选项等多种交互方式。
-- **状态可视化**：实时展示后端任务状态（如索引进度），让协作更加透明。
+| 工具 | 名称 | 理念 | 核心能力              |
+|:---:|:---:|:---:|:------------------|
+| 🧠 | **zhi (智)** | 审时度势，智在必行 | 交互式决策、多模态输入、状态可视化 |
+| 📚 | **ji (记)** | 博闻强记，温故知新 | 全局记忆、自动回忆、分类管理    |
+| 🔍 | **sou (搜)** | 搜神索隐，洞若观火 | 语义搜索、增量索引         |
 
-### 2. ji (记) - 记忆管理系统
-**"博闻强记，温故知新"**
-- **全局记忆**：存储项目级别的规则、偏好、最佳实践和上下文。
-- **自动回忆**：每次对话开始时自动加载相关记忆，保持上下文连贯性。
-- **分类管理**：支持 Rule (规则)、Preference (偏好)、Pattern (模式)、Context (上下文) 等多维度管理。
+### 🧠 zhi (智/审) - 智能代码审查与交互
 
-### 3. sou (搜) - 代码语义搜索引擎
-**"搜神索隐，洞若观火"**
-- **语义搜索**：基于 acemcp 引擎，支持自然语言查询代码库。
-- **增量索引**：实时监听文件变更，自动维护最新索引。
-- **智能等待**：在索引更新时自动平衡速度与完整性。
+> **"审时度势，智在必行"**
+
+- **交互式决策**：通过 MCP 弹窗主动询问用户意图，避免 AI 自作主张
+- **多模态输入**：支持文本、图片、预定义选项等多种交互方式
+- **状态可视化**：实时展示后端任务状态（如索引进度），让协作更加透明
+
+### 📚 ji (记) - 记忆管理系统
+
+> **"博闻强记，温故知新"**
+
+- **全局记忆**：存储项目级别的规则、偏好、最佳实践和上下文
+- **自动回忆**：每次对话开始时自动加载相关记忆，保持上下文连贯性
+- **分类管理**：支持 Rule (规则)、Preference (偏好)、Pattern (模式)、Context (上下文) 等多维度管理
+
+### 🔍 sou (搜) - 代码语义搜索引擎
+
+> **"搜神索隐，洞若观火"**
+
+- **语义搜索**：基于 acemcp 引擎，支持自然语言查询代码库
+- **增量索引**：实时监听文件变更，自动维护最新索引
+- **智能等待**：在索引更新时自动平衡速度与完整性
 
 ---
 
 ## 🚀 核心特性与流程
 
-### 1. sou 工具的智能等待机制
+### 1️⃣ sou 工具的智能等待机制
+
 当 AI 发起搜索请求时，如果系统检测到索引正在更新，会自动进行智能等待，确保结果的准确性。
 
-```ascii
+```text
 +-----+      Query       +-----+
 | AI  | ---------------> | MCP |
 +-----+                  +-----+
@@ -54,10 +105,11 @@
                    +---------------+
 ```
 
-### 2. ji 工具的索引预热功能
+### 2️⃣ ji 工具的索引预热功能
+
 当用户通过 ji 工具操作记忆时，系统会智能预判可能需要的代码上下文，并在后台默默触发索引预热。
 
-```ascii
+```text
 +------+    Add/Read    +-----+    Trigger     +--------+
 | User | -------------> | ji  | -------------> | Indexer|
 +------+     Memory     +-----+   Background   +--------+
@@ -72,10 +124,11 @@
                                             +-------------+
 ```
 
-### 3. zhi 工具的索引状态可视化
+### 3️⃣ zhi 工具的索引状态可视化
+
 在 MCP 弹窗中，用户可以实时看到后台索引的进度，不再面对黑盒等待。
 
-```ascii
+```text
 +-----+      Request      +-----+      Poll       +--------+
 | AI  | ----------------> | zhi | <-------------> | Status |
 +-----+                   +-----+                 +--------+
@@ -87,10 +140,11 @@
                      +---------------+
 ```
 
-### 4. acemcp 增量索引流程
+### 4️⃣ acemcp 增量索引流程
+
 高效的增量索引机制，确保只处理变更的文件，极大地降低了资源消耗。
 
-```ascii
+```text
 +-------+    Change    +---------+    Diff    +---------+
 | Files | -----------> | Watcher | ---------> | SHA-256 |
 +-------+              +---------+            +---------+
@@ -104,10 +158,11 @@
                                             +-------------+
 ```
 
-### 5. MCP 工具调用流程
+### 5️⃣ MCP 工具调用流程
+
 完整的 MCP 调用链路，实现了从 AI 到本地环境的安全、高效交互。
 
-```ascii
+```text
 +-----+    JSON-RPC    +-----+    Command    +-------+
 | AI  | -------------> | MCP | ------------> | Tauri |
 +-----+                | Svr |               |  App  |
@@ -550,51 +605,98 @@ git push origin v0.2.4
 
 ## 🛠️ 技术架构
 
-### 后端架构 (Rust)
-- **索引状态管理**：通过 `InitialIndexState` 枚举精确控制索引生命周期。
-- **核心函数**：
-  - `get_initial_index_state()`: 获取当前索引健康度。
-  - `ensure_initial_index_background()`: 确保索引任务在后台可靠运行。
-- **高性能**：利用 Rust 的异步特性 (Tokio) 和强类型系统，确保高并发下的稳定性和安全性。
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                        三术 技术架构                              │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                    前端层 (Vue 3 + TypeScript)           │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │    │
+│  │  │  McpPopup   │  │ useAcemcp   │  │  Settings   │      │    │
+│  │  │  Component  │  │   Sync      │  │    View     │      │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘      │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                    Tauri Bridge (IPC)                    │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                    后端层 (Rust + Tokio)                 │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │    │
+│  │  │  MCP Server │  │   Indexer   │  │   Memory    │      │    │
+│  │  │   (JSON-RPC)│  │   Engine    │  │   Store     │      │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘      │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### 前端集成 (TypeScript/Vue 3)
-- **响应式状态**：`useAcemcpSync` composable 封装了复杂的同步逻辑。
-- **组件化**：`McpPopup` 组件无缝集成了状态展示与交互逻辑。
-- **配置管理**：统一的设置界面，支持 `smart_wait_range` (默认 1-5s) 等精细化配置。
+### 🦀 后端架构 (Rust)
+
+| 模块 | 功能 | 关键实现 |
+|------|------|----------|
+| **索引状态管理** | 精确控制索引生命周期 | `InitialIndexState` 枚举 |
+| **状态查询** | 获取当前索引健康度 | `get_initial_index_state()` |
+| **后台任务** | 确保索引任务可靠运行 | `ensure_initial_index_background()` |
+| **高性能运行时** | 异步并发处理 | Tokio 异步运行时 |
+
+### 🎨 前端集成 (TypeScript/Vue 3)
+
+| 模块 | 功能 | 关键实现 |
+|------|------|----------|
+| **响应式状态** | 封装复杂同步逻辑 | `useAcemcpSync` composable |
+| **交互组件** | 状态展示与交互 | `McpPopup` 组件 |
+| **配置管理** | 精细化配置支持 | `smart_wait_range` (默认 1-5s) |
 
 ---
 
 ## 📦 安装与使用
 
-### 安装
+### 环境要求
 
-1. **克隆仓库**
-   ```bash
-   git clone https://github.com/yuaotian/sanshu.git
-   cd sanshu
-   ```
+| 依赖 | 版本要求 | 说明 |
+|------|----------|------|
+| Rust | 1.70+ | 后端编译 |
+| Node.js | 18+ | 前端构建 |
+| pnpm | 8+ | 包管理器 |
 
-2. **编译**
-   确保已安装 Rust 和 Node.js/pnpm 环境。
-   ```bash
-   # 安装前端依赖
-   pnpm install
+### 🚀 快速开始
 
-   # 构建项目
-   pnpm build
-   cargo build --release
-   ```
+#### 方式一：从源码构建
 
-3. **安装 CLI 工具**
-   ```bash
-   # 运行安装脚本 (Linux/macOS)
-   ./install.sh
+```bash
+# 1. 克隆仓库
+git clone https://github.com/imhuso/sanshu.git
+cd sanshu
 
-   # Windows
-   ./install-windows.ps1
-   ```
+# 2. 安装前端依赖
+pnpm install
 
-### 配置 MCP 客户端
+# 3. 构建项目
+pnpm build
+cargo build --release
+
+# 4. 安装 CLI 工具
+# Linux/macOS
+./install.sh
+
+# Windows
+./install-windows.ps1
+```
+
+#### 方式二：通过 Homebrew 安装 (macOS)
+
+```bash
+# 添加 Tap
+brew tap imhuso/tap
+
+# 安装
+brew install sanshu
+```
+
+### ⚙️ 配置 MCP 客户端
 
 在您的 MCP 客户端配置文件中添加：
 
@@ -602,39 +704,123 @@ git push origin v0.2.4
 {
   "mcpServers": {
     "三术": {
-      "command": "三术"
+      "command": "sanshu"
     }
   }
 }
 ```
 
-### 在 AI 编辑器中启用提示词（可选）
+### 📝 在 AI 编辑器中启用提示词（可选）
 
-如果你在使用 Augment Ace 或其他支持 MCP 的 AI 编辑器，推荐按如下方式启用本仓库提供的提示词协议：
+> 💡 **提示**：如果你在使用 Augment Ace 或其他支持 MCP 的 AI 编辑器，推荐启用本仓库提供的提示词协议以获得最佳体验。
 
-- 打开编辑器的 **系统提示词 / 项目级默认提示词** 配置入口。
-- 将仓库根目录下 `sanshu_prompt_word.md` 的完整内容复制到该配置中。
-- 确保已按上文「配置 MCP 客户端」部分，将「三术」注册为 MCP 服务并能正常连接。
-- 之后，在编辑器中调用 AI 时，它将自动遵循 AURA-X-KYS 协议，通过「三术」的 zhi / ji / sou 工具完成代码生成、审查、记忆管理和语义搜索等协同流程。
+**配置步骤**：
+
+1. 打开编辑器的 **系统提示词 / 项目级默认提示词** 配置入口
+2. 将仓库根目录下 `sanshu_prompt_word.md` 的完整内容复制到该配置中
+3. 确保已按上文「配置 MCP 客户端」部分，将「三术」注册为 MCP 服务并能正常连接
+4. 之后，在编辑器中调用 AI 时，它将自动遵循 AURA-X-KYS 协议
 
 ---
 
 ## ☯️ 哲学理念
 
+<div align="center">
+
 **"道生一，一生二，二生三，三生万物"**
+
+*—— 《道德经》*
+
+</div>
 
 "三术"的命名灵感源自《道德经》。在 AI 辅助编程的语境下，这象征着从无到有、从简单到复杂的创造过程：
 
-*   **道 (The Way)**：编程的核心思想与逻辑。
-*   **一 (One)**：**智 (zhi)**。确立方向，明辨是非。所有的创造始于正确的决策与审查。
-*   **二 (Two)**：**记 (ji)**。积累经验，形成规范。在决策的基础上，沉淀为可复用的知识与记忆。
-*   **三 (Three)**：**搜 (sou)**。探索未知，连接万物。基于智慧与记忆，通过搜索连接广阔的代码世界。
-*   **万物 (Myriad Things)**：通过这三者的循环互动，构建出无限可能的软件生态。
+| 概念 | 对应 | 含义 |
+|:---:|:---:|:---|
+| **道** | The Way | 编程的核心思想与逻辑 |
+| **一** | 智 (zhi) | 确立方向，明辨是非。所有的创造始于正确的决策与审查 |
+| **二** | 记 (ji) | 积累经验，形成规范。在决策的基础上，沉淀为可复用的知识与记忆 |
+| **三** | 搜 (sou) | 探索未知，连接万物。基于智慧与记忆，通过搜索连接广阔的代码世界 |
+| **万物** | Myriad Things | 通过这三者的循环互动，构建出无限可能的软件生态 |
 
-三术不仅仅是一组工具，更是一种 **"控制" (Control)**、**"协作" (Collaboration)** 与 **"智能" (Intelligence)** 的平衡艺术。它让开发者在享受 AI 带来的效率提升的同时，依然牢牢掌握着创造的主导权。
+> 三术不仅仅是一组工具，更是一种 **"控制" (Control)**、**"协作" (Collaboration)** 与 **"智能" (Intelligence)** 的平衡艺术。它让开发者在享受 AI 带来的效率提升的同时，依然牢牢掌握着创造的主导权。
+
+---
+
+## 🤝 贡献指南
+
+我们欢迎所有形式的贡献！无论是报告 Bug、提出新功能建议，还是提交代码改进。
+
+### 如何贡献
+
+1. **Fork** 本仓库
+2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交你的更改 (`git commit -m 'feat: Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 **Pull Request**
+
+### 提交规范
+
+本项目遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+
+| 类型 | 说明 |
+|------|------|
+| `feat` | 新功能 |
+| `fix` | Bug 修复 |
+| `docs` | 文档更新 |
+| `style` | 代码格式调整 |
+| `refactor` | 代码重构 |
+| `perf` | 性能优化 |
+| `test` | 测试相关 |
+| `chore` | 构建/工具链相关 |
+
+### 开发环境要求
+
+- **Rust**: 1.70+
+- **Node.js**: 18+
+- **pnpm**: 8+
+
+---
+
+## 📄 许可证
+
+本项目采用 [MIT 许可证](LICENSE) 开源。
+
+```
+MIT License
+
+Copyright (c) 2025 sanshu
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+```
 
 ---
 
 ## 🙏 致谢
 
-特此感谢 [寸止 (Cunzhi)](https://github.com/imhuso/cunzhi) 项目为本项目提供了坚实的基础。三术 (sanshu) 是在原项目基础上的进一步探索与创新，我们向原作者致以诚挚的谢意。
+特此感谢以下项目和贡献者：
+
+- [寸止 (Cunzhi)](https://github.com/imhuso/cunzhi) - 为本项目提供了坚实的基础
+- [Model Context Protocol](https://modelcontextprotocol.io/) - 提供了 AI 与工具协同的标准协议
+- [Tauri](https://tauri.app/) - 提供了跨平台桌面应用框架
+- [Augment Code](https://www.augmentcode.com/) - 提供了优秀的 AI 编程助手
+
+三术 (sanshu) 是在原项目基础上的进一步探索与创新，我们向所有贡献者致以诚挚的谢意。
+
+---
+
+<div align="center">
+
+**如果这个项目对你有帮助，请给我们一个 ⭐ Star！**
+
+Made with ❤️ by the sanshu team
+
+</div>
