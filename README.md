@@ -2,6 +2,7 @@
 
 # 三术 / sanshu
 
+[![CI](https://github.com/imhuso/sanshu/workflows/CI/badge.svg)](https://github.com/imhuso/sanshu/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
@@ -745,6 +746,59 @@ PS：某些插件或者CLI工具可能无法正确识别`三术`中文，请自�
 | **万物** | Myriad Things | 通过这三者的循环互动，构建出无限可能的软件生态 |
 
 > 三术不仅仅是一组工具，更是一种 **"控制" (Control)**、**"协作" (Collaboration)** 与 **"智能" (Intelligence)** 的平衡艺术。它让开发者在享受 AI 带来的效率提升的同时，依然牢牢掌握着创造的主导权。
+
+---
+
+## ❓ 常见问题 (FAQ)
+
+### 三术与其他 MCP 工具的区别
+
+三术通过 **zhi (智)**、**ji (记)**、**sou (搜)** 三大核心组件，实现了**强制交互**、**全局记忆**和**语义搜索**的深度融合。特别是其独有的 **AURA-X-KYS 协议**，确保 AI 严格遵循工程规范（KISS/YAGNI/SOLID），并通过 MCP 弹窗让用户掌握最终决策权，从而避免了传统 AI 助手容易产生的幻觉和自作主张问题。
+
+### 如何验证 MCP 服务是否正常运行
+
+1. **检查日志**：查看临时目录下的 `sanshu-mcp.log` 文件（具体路径取决于操作系统）。
+2. **使用 MCP 客户端**：在 Claude Desktop 或 Augment Ace 中，如果能看到 "三术" 工具集（zhi/ji/sou），说明连接正常。
+3. **状态弹窗**：在编辑器中触发三术工具时，应该能看到右下角的交互弹窗。
+
+### 索引速度慢或卡住的解决方案
+
+- **智能等待**：系统会自动平衡索引速度和系统资源，初次索引可能会较慢，请耐心等待。
+- **资源检查**：确保系统有足够的内存和磁盘空间。
+- **重启服务**：尝试重启 MCP 客户端（如重启 Claude Desktop 或 Augment Ace），这将重新启动三术 MCP 服务。
+
+### 如何清除或重建索引
+
+索引数据和配置文件存储在系统的标准配置目录下：
+- **Windows**: `%APPDATA%\sanshu\`
+- **macOS/Linux**: `~/.config/sanshu/`
+
+若需完全重置，可以删除该目录下的相关数据库文件或配置文件。
+
+### 支持哪些编程语言
+
+三术的语义搜索 (`sou`) 支持几乎所有主流编程语言和配置文件，包括但不限于：
+- Python (`.py`), JavaScript/TypeScript (`.js`, `.ts`, `.jsx`, `.tsx`), Rust (`.rs`), Go (`.go`), Java (`.java`), C/C++ (`.c`, `.cpp`, `.h`)
+- 配置文件: `.json`, `.yaml`, `.toml`, `.xml`, `.md`, `.sql`, `.sh` 等。
+您可以根据需要在设置中自定义索引的文件扩展名。
+
+### 记忆存储在哪里，如何备份
+
+记忆数据存储在上述配置目录下的数据库文件中。备份时，只需复制整个配置目录即可。
+
+### 与 Augment Ace 之外的其他 AI 编辑器的兼容性
+
+三术基于标准的 **Model Context Protocol (MCP)** 构建，因此理论上兼容任何支持 MCP 的客户端，包括：
+- **Claude Desktop App**
+- **Augment Ace**
+- **Cursor** (通过 MCP 支持)
+- 其他支持 MCP 的 IDE 插件或工具
+
+### 遇到错误时的调试方法
+
+1. **设置环境变量**：设置 `RUST_LOG=debug` 重启客户端以获取详细日志。
+2. **查看日志**：分析日志文件（通常在临时目录或配置目录），查找 `ERROR` 或 `WARN` 级别的记录。
+3. **提交 Issue**：如果无法解决，请携带日志片段在 GitHub 仓库提交 Issue。
 
 ---
 
