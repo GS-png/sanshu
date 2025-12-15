@@ -66,7 +66,7 @@ export const DEFAULT_MCP_TOOLS: MCPToolConfig[] = [
     id: 'memory',
     name: '记忆管理工具',
     description: '智能记忆存储和检索系统',
-    enabled: true,
+    enabled: true, // 默认启用：核心功能，不依赖外部配置，开箱即用
     canDisable: true,
     icon: 'i-carbon-data-base text-lg text-purple-600 dark:text-purple-400',
     iconBg: 'bg-purple-100',
@@ -76,7 +76,7 @@ export const DEFAULT_MCP_TOOLS: MCPToolConfig[] = [
     id: 'sou',
     name: '代码搜索工具',
     description: '基于查询在特定项目中搜索相关的代码上下文，支持语义搜索和增量索引',
-    enabled: false,
+    enabled: false, // 默认关闭：依赖第三方 acemcp 服务，需要用户配置 token 和 URL 后才能使用
     canDisable: true,
     icon: 'i-carbon-search text-lg text-green-600 dark:text-green-400',
     iconBg: 'bg-green-100',
