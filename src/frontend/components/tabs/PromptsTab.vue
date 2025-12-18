@@ -9,8 +9,9 @@ const { mcpTools, loading: mcpLoading, loadMcpTools, enabledTools } = useMcpTool
 // 根据MCP工具状态动态生成提示词
 const promptContent = computed(() => {
   // 将后端数据格式转换为前端格式
+  // 后端使用 'ji' 作为记忆工具标识符，前端使用 'memory'
   const frontendTools = mcpTools.value.map(tool => ({
-    id: tool.id === 'ji' ? 'memory' : tool.id, // 后端用ji，前端用memory
+    id: tool.id === 'ji' ? 'memory' : tool.id,
     name: tool.name,
     description: tool.description,
     enabled: tool.enabled,
@@ -18,10 +19,7 @@ const promptContent = computed(() => {
     icon: tool.icon,
     iconBg: tool.icon_bg,
     darkIconBg: tool.dark_icon_bg,
-  })).filter((tool) => {
-    // 只包含有提示词配置的工具
-    return tool.id === 'zhi' || tool.id === 'memory' || tool.id === 'sou'
-  })
+  }))
 
   return generateFullPrompt(frontendTools)
 })
