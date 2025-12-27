@@ -242,8 +242,8 @@ impl AcemcpTool {
         })
     }
 
-    /// 获取acemcp配置
-    async fn get_acemcp_config() -> Result<AcemcpConfig> {
+    /// 获取acemcp配置（公有方法，供 commands 模块调用）
+    pub async fn get_acemcp_config() -> Result<AcemcpConfig> {
         // 从配置文件中读取acemcp配置
         let config = crate::config::load_standalone_config()
             .map_err(|e| anyhow::anyhow!("读取配置文件失败: {}", e))?;
