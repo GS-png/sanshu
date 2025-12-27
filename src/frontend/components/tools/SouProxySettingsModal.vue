@@ -5,9 +5,9 @@
  * 代理设置独立弹窗组件
  * 包含：代理配置、自动检测、测速、测速报告等功能
  */
-import { invoke } from '@tauri-apps/api/core'
-import { useDialog, useMessage } from 'naive-ui'
-import { computed, ref, watch } from 'vue'
+import { invoke } from '@tauri-apps/api/core';
+import { useDialog, useMessage } from 'naive-ui';
+import { computed, ref } from 'vue';
 
 // Props
 const props = defineProps<{
@@ -743,12 +743,12 @@ function getDiffColorClass(proxyMs: number | null, directMs: number | null): str
                   <div
                     v-for="(p, idx) in detectedProxies" :key="idx"
                     class="px-3 py-1.5 rounded-full text-xs font-mono cursor-pointer border transition-colors flex items-center gap-2"
-                    :class="config.proxy_port === p.port ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-slate-800 dark:text-gray-300 dark:border-slate-700'"
+                    :class="config.proxy_port === p.port ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700' : 'bg-slate-50 text-gray-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-gray-300 dark:border-slate-700'"
                     @click="applyProxy(p)"
                   >
                     <span>{{ p.host }}:{{ p.port }}</span>
                     <span class="opacity-70">{{ p.proxy_type.toUpperCase() }}</span>
-                    <span v-if="p.response_time_ms" class="px-1 rounded bg-black/5 dark:bg-white/10">{{ p.response_time_ms }}ms</span>
+                    <span v-if="p.response_time_ms" class="px-1 rounded bg-black/10 dark:bg-white/20">{{ p.response_time_ms }}ms</span>
                   </div>
                 </div>
               </n-collapse-transition>
