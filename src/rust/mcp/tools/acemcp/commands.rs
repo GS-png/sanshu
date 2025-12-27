@@ -472,3 +472,78 @@ pub fn stop_all_watching() -> Result<(), String> {
     watcher_manager.stop_all();
     Ok(())
 }
+
+/// 删除指定项目的索引记录
+/// 同时清理 projects.json 和 projects_status.json 中的数据
+#[tauri::command]
+pub async fn remove_acemcp_project_index(project_root_path: String) -> Result<String, String> {
+    use std::path::PathBuf;
+    use std::fs;
+    use std::collections::HashMap;
+
+    // 规范化路径
+    let normalized_root = PathBuf::from(&project_root_path)
+        .canonicalize()
+        .unwrap_or_else(|_| PathBuf::from(&project_root_path))
+        .to_string_lossy()
+        .replace('\\', "/");
+
+    log::info!("删除项目索引记录: {}", normalized_root);
+
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    let data_dir = home.join(".acemcp").join("data");
+
+    // 1. 从 projects.json 中删除项目的 blob 列表
+    let projects_path = data_dir.join("projects.json");
+    if projects_path.exists() {
+        if let Ok(data) = fs::read_to_string(&projects_path) {
+            if let Ok(mut projects) = serde_json::from_str::<HashMap<String, Vec<String>>>(&data) {
+                if projects.remove(&normalized_root).is_some() {
+                    if let Ok(new_data) = serde_json::to_string_pretty(&projects) {
+                        let _ = fs::write(&projects_path, new_data);
+                        log::info!("已从 projects.json 删除项目: {}", normalized_root);
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. 从 projects_status.json 中删除项目状态
+    let status_path = data_dir.join("projects_status.json");
+    if status_path.exists() {
+        if let Ok(data) = fs::read_to_string(&status_path) {
+            if let Ok(mut status) = serde_json::from_str::<serde_json::Value>(&data) {
+                if let Some(projects) = status.get_mut("projects") {
+                    if let Some(map) = projects.as_object_mut() {
+                        if map.remove(&normalized_root).is_some() {
+                            if let Ok(new_data) = serde_json::to_string_pretty(&status) {
+                                let _ = fs::write(&status_path, new_data);
+                                log::info!("已从 projects_status.json 删除项目: {}", normalized_root);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. 停止该项目的文件监听（如果有）
+    let watcher_manager = super::watcher::get_watcher_manager();
+    let _ = watcher_manager.stop_watching(&normalized_root);
+
+    Ok(format!("已删除项目索引记录: {}", normalized_root))
+}
+
+/// 检查指定目录是否存在
+#[tauri::command]
+pub fn check_directory_exists(directory_path: String) -> Result<bool, String> {
+    use std::path::PathBuf;
+
+    let path = PathBuf::from(&directory_path);
+    
+    // 尝试规范化路径（处理 Windows 扩展路径前缀等情况）
+    let normalized = path.canonicalize().unwrap_or(path.clone());
+    
+    Ok(normalized.exists() && normalized.is_dir())
+}
+

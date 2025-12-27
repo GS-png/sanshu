@@ -341,17 +341,16 @@ function renderLabel({ option }: { option: TreeOption }) {
     ])
   }
 
-  // 文件节点：显示文件名和状态标签
+  // 文件节点：显示文件名和状态图标
   const status = node.status
   return h('div', { class: 'flex items-center gap-1.5' }, [
     h('span', { class: 'tree-node-label tree-node-label--file truncate' }, fileName),
-    h('span', {
-      class: `tree-node-badge ${
-        status === 'indexed'
-          ? 'tree-node-badge--indexed'
-          : 'tree-node-badge--pending'
-      }`,
-    }, status === 'indexed' ? '✓' : '○'),
+    // 状态图标：已索引（绿色勾选）/ 未同步（橙色圆圈）
+    h('div', {
+      class: status === 'indexed'
+        ? 'i-carbon-checkmark-filled w-3 h-3 text-green-500'
+        : 'i-carbon-circle-dash w-3 h-3 text-orange-500',
+    }),
   ])
 }
 

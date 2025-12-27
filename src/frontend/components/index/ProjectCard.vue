@@ -5,6 +5,8 @@ import { computed } from 'vue'
 interface Props {
   project: ProjectIndexStatus
   isWatching: boolean
+  // 目录是否存在
+  directoryExists?: boolean
 }
 
 interface Emits {
@@ -13,9 +15,13 @@ interface Emits {
 	(e: 'toggle-watching'): void
 	// 复制路径事件，向父组件传递规范化后的路径
 	(e: 'copy-path', path: string): void
+	// 删除项目索引记录
+	(e: 'delete'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  directoryExists: true,
+})
 const emit = defineEmits<Emits>()
 
 // 状态配置映射
@@ -132,6 +138,13 @@ function formatAbsoluteTime(timeStr: string | null): string {
           <div class="project-name">
             <div class="i-carbon-folder text-primary-500 flex-shrink-0" />
             <span class="name-text">{{ projectName }}</span>
+            <!-- 目录不存在警告 -->
+            <n-tooltip v-if="!props.directoryExists" trigger="hover">
+              <template #trigger>
+                <div class="i-carbon-warning-filled text-red-500 flex-shrink-0 ml-1" />
+              </template>
+              目录不存在，建议删除此记录
+            </n-tooltip>
           </div>
           <!-- 项目路径 -->
           <n-tooltip trigger="hover">
@@ -286,6 +299,23 @@ function formatAbsoluteTime(timeStr: string | null): string {
           </template>
           结构
         </n-button>
+
+        <!-- 删除按钮 -->
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-button
+              size="tiny"
+              quaternary
+              type="error"
+              @click="emit('delete')"
+            >
+              <template #icon>
+                <div class="i-carbon-trash-can text-xs" />
+              </template>
+            </n-button>
+          </template>
+          删除索引记录
+        </n-tooltip>
       </div>
     </div>
   </div>

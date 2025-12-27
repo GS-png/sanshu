@@ -36,6 +36,8 @@ const watchingProjects = ref<string[]>([])
 const selectedProject = ref<string>('')
 const showDrawer = ref(false)
 const resyncLoading = ref(false)
+// 目录存在状态缓存（key 为规范化后的路径）
+const directoryExistsCache = ref<Record<string, boolean>>({})
 
 // 搜索和筛选状态
 const searchQuery = ref('')
@@ -167,6 +169,8 @@ const stats = computed(() => {
 // 初始化加载
 onMounted(async () => {
   await loadAllData()
+  // 加载完成后检测所有目录的存在状态
+  await checkAllDirectoriesExist()
   startPolling()
 })
 
@@ -319,6 +323,76 @@ async function handleDrawerResync() {
   }
 }
 
+// 检测目录是否存在
+async function checkDirectoryExists(projectRoot: string): Promise<boolean> {
+  const normalizedPath = normalizePath(projectRoot)
+  // 优先使用缓存
+  if (normalizedPath in directoryExistsCache.value) {
+    return directoryExistsCache.value[normalizedPath]
+  }
+  try {
+    const exists = await invoke<boolean>('check_directory_exists', {
+      directoryPath: normalizedPath,
+    })
+    directoryExistsCache.value[normalizedPath] = exists
+    return exists
+  }
+  catch (err) {
+    console.error('检测目录存在性失败:', err)
+    return true // 默认存在，避免误删
+  }
+}
+
+// 加载所有项目的目录存在状态
+async function checkAllDirectoriesExist() {
+  const projects = Object.keys(allProjects.value)
+  const results = await Promise.all(
+    projects.map(async (projectRoot) => {
+      const exists = await checkDirectoryExists(projectRoot)
+      return { projectRoot, exists }
+    })
+  )
+  results.forEach(({ projectRoot, exists }) => {
+    const normalizedPath = normalizePath(projectRoot)
+    directoryExistsCache.value[normalizedPath] = exists
+  })
+}
+
+// 删除项目索引记录（带二次确认）
+function handleDeleteProject(projectRoot: string) {
+  const normalizedPath = normalizePath(projectRoot)
+  const projectName = normalizedPath.split('/').pop() || normalizedPath
+  
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要删除项目索引记录吗？\n\n项目: ${projectName}\n路径: ${normalizedPath}\n\n此操作将从列表中移除该项目，不会删除实际文件。`,
+    positiveText: '删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await invoke<string>('remove_acemcp_project_index', {
+          projectRootPath: normalizedPath,
+        })
+        message.success('已删除项目索引记录')
+        // 从本地缓存中移除
+        delete directoryExistsCache.value[normalizedPath]
+        // 刷新列表
+        await loadAllData()
+      }
+      catch (err) {
+        console.error('删除项目索引记录失败:', err)
+        message.error(`删除失败: ${err}`)
+      }
+    },
+  })
+}
+
+// 获取指定项目的目录存在状态
+function getDirectoryExists(projectRoot: string): boolean {
+  const normalizedPath = normalizePath(projectRoot)
+  // 如果还没检测过，默认返回 true
+  return directoryExistsCache.value[normalizedPath] ?? true
+}
 
 </script>
 
@@ -421,10 +495,12 @@ async function handleDrawerResync() {
         :key="project.project_root"
         :project="project"
         :is-watching="watchingProjects.includes(project.project_root)"
+        :directory-exists="getDirectoryExists(project.project_root)"
 	        @view-tree="viewProjectTree(project.project_root)"
 	        @reindex="handleReindex(project.project_root)"
 	        @toggle-watching="toggleWatching(project.project_root)"
 	        @copy-path="copyPath"
+	        @delete="handleDeleteProject(project.project_root)"
       />
     </div>
 
