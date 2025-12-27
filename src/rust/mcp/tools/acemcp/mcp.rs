@@ -28,7 +28,7 @@ use super::types::{
 };
 use crate::log_debug;
 use crate::log_important;
-use crate::network::proxy::{ProxyInfo, ProxyType};
+// 代理模块（在 create_acemcp_client 中使用）
 
 /// Acemcp工具实现
 pub struct AcemcpTool;

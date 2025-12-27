@@ -723,7 +723,7 @@ pub async fn test_acemcp_proxy_speed(
     proxy_port: Option<u16>,
     proxy_type: Option<String>,
     test_query: String,
-    project_root_path: String,
+    _project_root_path: String,
     state: State<'_, AppState>,
 ) -> Result<ProxySpeedTestResult, String> {
     log::info!("🚀 开始代理测速: mode={}, query={}", test_mode, test_query);
