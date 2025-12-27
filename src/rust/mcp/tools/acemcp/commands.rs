@@ -1128,10 +1128,9 @@ pub async fn test_acemcp_proxy_speed(
         upload_single_metric.error = Some(err);
     } else if let Some(ref pfs) = project_files_status {
         // 随机选择一个文件进行单文件上传测速（更贴近真实场景）
-        use rand::seq::SliceRandom;
-        let mut rng = rand::thread_rng();
-
-        if let Some(file) = pfs.files.choose(&mut rng) {
+        if !pfs.files.is_empty() {
+            let random_index = fastrand::usize(0..pfs.files.len());
+            let file = &pfs.files[random_index];
             match build_single_file_blobs_for_speed_test(&project_root_path, &file.path, max_lines_per_blob) {
                 Ok((blobs, file_bytes)) => {
                     let upload_url = format!("{}/batch-upload", base_url);

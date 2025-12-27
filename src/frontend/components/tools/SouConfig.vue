@@ -84,6 +84,7 @@ const proxyDetecting = ref(false)
 const detectedProxies = ref<DetectedProxy[]>([])
 const proxyTesting = ref(false)
 const speedTestResult = ref<SpeedTestResult | null>(null)
+const speedTestProgress = ref('')
 const speedTestMode = ref<'proxy' | 'direct' | 'compare'>('compare')
 const speedTestQuery = ref('代码搜索测试')
 const multiQuerySearchDetails = ref<SpeedTestQueryDetail[]>([])
@@ -670,6 +671,7 @@ async function runSpeedTest() {
 
   proxyTesting.value = true
   speedTestResult.value = null
+  speedTestProgress.value = '正在准备测速...'
   multiQuerySearchDetails.value = []
   multiQueryDetailsExpanded.value = false
 
@@ -764,6 +766,7 @@ async function runSpeedTest() {
   }
   finally {
     proxyTesting.value = false
+    speedTestProgress.value = ''
   }
 }
 
@@ -904,6 +907,47 @@ async function copyQueryDetail(detail: SpeedTestQueryDetail, idx: number) {
   try {
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
     message.success(`已复制 Q${idx + 1} 明细（JSON）`)
+  }
+  catch (e) {
+    message.error(`复制失败: ${e}`)
+  }
+}
+
+/** 复制单个指标结果到剪贴板 */
+async function copyMetricResult(metric: SpeedTestMetric) {
+  if (!speedTestResult.value) {
+    message.warning('暂无测速结果')
+    return
+  }
+
+  const report = {
+    tool: 'sou',
+    timestamp: speedTestResult.value.timestamp,
+    mode: speedTestResult.value.mode,
+    project: speedTestProjectRoot.value || '未选择',
+    proxy: speedTestResult.value.mode === 'direct'
+      ? { enabled: false }
+      : {
+          enabled: true,
+          type: config.value.proxy_type,
+          host: config.value.proxy_host,
+          port: config.value.proxy_port,
+          username: config.value.proxy_username || undefined,
+          password_set: Boolean(config.value.proxy_password),
+        },
+    metric: {
+      name: metric.name,
+      type: metric.metric_type,
+      proxy_time_ms: metric.proxy_time_ms,
+      direct_time_ms: metric.direct_time_ms,
+      success: metric.success,
+      error: metric.error,
+    },
+  }
+
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(report, null, 2))
+    message.success(`已复制指标 "${metric.name}" 结果`)
   }
   catch (e) {
     message.error(`复制失败: ${e}`)
@@ -1272,7 +1316,7 @@ defineExpose({ saveConfig })
                   v-if="proxyTesting"
                   class="mt-2 text-xs text-gray-500 dark:text-gray-300"
                 >
-                  正在测速…（{{ speedTestQueries.length || 1 }} 条查询）
+                  {{ speedTestProgress || `正在测速…（${speedTestQueries.length || 1} 条查询）` }}
                 </div>
 
                 <!-- 检测到的代理列表 -->
@@ -1577,9 +1621,25 @@ defineExpose({ saveConfig })
                             <div class="text-sm font-medium">
                               {{ metric.name }}
                             </div>
-                            <n-tag :type="metric.success ? 'success' : 'error'" size="small">
-                              {{ metric.success ? 'OK' : '失败' }}
-                            </n-tag>
+                            <div class="flex items-center gap-1">
+                              <n-tooltip>
+                                <template #trigger>
+                                  <n-button
+                                    size="tiny"
+                                    text
+                                    @click="copyMetricResult(metric)"
+                                  >
+                                    <template #icon>
+                                      <div class="i-carbon-copy text-gray-400 hover:text-gray-600" />
+                                    </template>
+                                  </n-button>
+                                </template>
+                                <span>复制该指标结果（JSON）</span>
+                              </n-tooltip>
+                              <n-tag :type="metric.success ? 'success' : 'error'" size="small">
+                                {{ metric.success ? 'OK' : '失败' }}
+                              </n-tag>
+                            </div>
                           </div>
 
                           <div class="mt-2 flex items-end justify-between gap-3">

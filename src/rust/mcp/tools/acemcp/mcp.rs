@@ -83,8 +83,7 @@ impl AcemcpTool {
             InitialIndexState::Indexing => {
                 // 正在索引中，应用智能等待
                 if let Some((min_wait, max_wait)) = acemcp_config.smart_wait_range {
-                    use rand::Rng;
-                    let wait_secs = rand::thread_rng().gen_range(min_wait..=max_wait);
+                    let wait_secs = fastrand::u64(min_wait..=max_wait);
 
                     log_important!(info, "检测到索引正在进行中，智能等待 {} 秒后执行搜索", wait_secs);
                     tokio::time::sleep(tokio::time::Duration::from_secs(wait_secs)).await;
