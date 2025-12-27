@@ -1038,7 +1038,7 @@ function formatRelativeTime(timeStr: string | null): string {
                 <!-- 进度头部 -->
                 <div class="flex justify-between items-center text-xs">
                   <span class="text-gray-500 font-medium">诊断进度</span>
-                  <span class="font-mono text-primary-600 dark:text-primary-400">
+                  <span class="font-mono text-primary-600 text-primary-400">
                     {{ speedTestProgressData?.percentage ?? 0 }}%
                   </span>
                 </div>
@@ -1070,7 +1070,7 @@ function formatRelativeTime(timeStr: string | null): string {
                     />
                     <span v-else class="i-fa6-regular-clock text-gray-400 dark:text-gray-500" />
                     
-                    <span class="font-medium text-gray-700 dark:text-gray-200">
+                    <span class="font-medium text-gray-700 text-gray-200">
                       {{ speedTestProgressData?.stage_name ?? '初始化' }}
                     </span>
                     <span v-if="speedTestProgressData?.sub_step" class="text-gray-400">
