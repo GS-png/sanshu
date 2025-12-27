@@ -4,12 +4,12 @@
  * 包含：基础配置、高级配置、日志调试、索引管理
  */
 import { invoke } from '@tauri-apps/api/core'
-import { useDialog, useMessage } from 'naive-ui'
-import { computed, onMounted, ref, watch } from 'vue'
+import { useMessage } from 'naive-ui'
+import { onMounted, ref, watch } from 'vue'
 import { useAcemcpSync } from '../../composables/useAcemcpSync'
 import ConfigSection from '../common/ConfigSection.vue'
 import ProjectIndexManager from '../settings/ProjectIndexManager.vue'
-import ProxySettingsModal from './ProxySettingsModal.vue'
+import ProxySettingsModal from './SouProxySettingsModal.vue'
 
 // Props
 const props = defineProps<{
@@ -17,7 +17,6 @@ const props = defineProps<{
 }>()
 
 const message = useMessage()
-const dialog = useDialog()
 
 // Acemcp 同步状态
 const {
@@ -46,11 +45,7 @@ const config = ref({
 })
 
 const loadingConfig = ref(false)
-
-
 const showProxyModal = ref(false)
-
-
 // 调试状态
 const debugProjectRoot = ref('')
 const debugQuery = ref('')
@@ -308,7 +303,6 @@ async function loadDebugProjectOptions() {
         value: p.project_root,
       }))
     debugProjectOptions.value = list
-    
     // 如果列表不为空且当前未选择项目，自动选择第一个
     if (list.length > 0 && !debugProjectRoot.value) {
       debugProjectRoot.value = list[0].value
@@ -440,8 +434,6 @@ function getProjectName(projectRoot: string): string {
   const parts = (projectRoot || '').replace(/\\/g, '/').split('/').filter(Boolean)
   return parts.length > 0 ? parts[parts.length - 1] : projectRoot
 }
-
-
 
 // 监听扩展名变化，自动规范化
 watch(() => config.value.text_extensions, (list) => {
