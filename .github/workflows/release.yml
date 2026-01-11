@@ -283,14 +283,24 @@ jobs:
           TAG_NAME="${{ needs.prepare.outputs.tag_name }}"
 
           # 尝试获取上一个 Tag
-          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+' | grep -A 1 "^$TAG_NAME$" | tail -n 1 || echo "")
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+' | awk -v tag="$TAG_NAME" '$0==tag {getline; print; exit}')
 
           echo "Generating changelog for $TAG_NAME (Previous: $PREVIOUS_TAG)"
 
           if [ -z "$PREVIOUS_TAG" ] || [ "$PREVIOUS_TAG" == "$TAG_NAME" ]; then
-            git-cliff --tag "$TAG_NAME" --output changelog.md
+            if ! git-cliff --tag "$TAG_NAME" --output changelog.md; then
+              echo "git-cliff failed, fallback to git log"
+              echo "## What's Changed" > changelog.md
+              echo "" >> changelog.md
+              git log -n 100 --pretty=format:"* %s (%h)" >> changelog.md
+            fi
           else
-            git-cliff "$PREVIOUS_TAG..$TAG_NAME" --output changelog.md
+            if ! git-cliff "$PREVIOUS_TAG..$TAG_NAME" --output changelog.md; then
+              echo "git-cliff failed, fallback to git log"
+              echo "## What's Changed" > changelog.md
+              echo "" >> changelog.md
+              git log --pretty=format:"* %s (%h)" "$PREVIOUS_TAG..$TAG_NAME" >> changelog.md
+            fi
           fi
 
           # 生成发布标题 (提取主要特性)

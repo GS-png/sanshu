@@ -13,7 +13,7 @@ body = """
 ### {{ group }}
 
 {% for commit in commits -%}
-* {{ commit.message | split(pat=":") | last | trim | upper_first }} by [@{{ commit.author.name }}](https://github.com/{{ commit.author.name }}) in [{{ commit.id | truncate(length=7, end="") }}](https://github.com/yuaotian/sanshu/commit/{{ commit.id }})
+* {{ commit.message | split(pat=":") | last | trim | upper_first }} by [@{{ commit.author.name }}](https://github.com/{{ commit.author.name }}) in [{{ commit.id | truncate(length=7, end="") }}](https://github.com/GS-png/sanshu/commit/{{ commit.id }})
 {% endfor %}
 {% endfor -%}
 """
@@ -82,5 +82,5 @@ topo_order = false
 sort_commits = "newest"
 
 [remote.github]
-owner = "yuaotian"
+owner = "GS-png"
 repo = "sanshu"
