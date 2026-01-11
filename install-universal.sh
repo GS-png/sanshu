@@ -40,7 +40,7 @@ echo "🔨 构建 MCP CLI 工具..."
 cargo build --release
 
 # 检查构建结果
-if [[ ! -f "target/release/等一下" ]] || [[ ! -f "target/release/三术" ]]; then
+if [[ ! -f "target/release/sanshu-ui" ]] || [[ ! -f "target/release/sanshu-mcp" ]]; then
     echo "❌ CLI 工具构建失败"
     echo "请检查构建错误并重试"
     exit 1
@@ -56,8 +56,8 @@ if [[ "$OS" == "macos" ]]; then
     INSTALL_DIR="/usr/local/bin"
 
     echo "📋 安装 CLI 工具到 $INSTALL_DIR..."
-    sudo cp "target/release/等一下" "$INSTALL_DIR/"
-    sudo cp "target/release/三术" "$INSTALL_DIR/"
+    sudo cp "target/release/sanshu-ui" "$INSTALL_DIR/等一下"
+    sudo cp "target/release/sanshu-mcp" "$INSTALL_DIR/三术"
     sudo chmod +x "$INSTALL_DIR/等一下"
     sudo chmod +x "$INSTALL_DIR/三术"
 
@@ -73,8 +73,8 @@ elif [[ "$OS" == "linux" ]]; then
     mkdir -p "$BIN_DIR"
 
     # 复制CLI工具
-    cp "target/release/等一下" "$BIN_DIR/"
-    cp "target/release/三术" "$BIN_DIR/"
+    cp "target/release/sanshu-ui" "$BIN_DIR/等一下"
+    cp "target/release/sanshu-mcp" "$BIN_DIR/三术"
     chmod +x "$BIN_DIR/等一下"
     chmod +x "$BIN_DIR/三术"
 

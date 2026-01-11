@@ -23,7 +23,7 @@ echo "🔨 构建 CLI 工具..."
 cargo build --release
 
 # 检查构建结果
-if [[ ! -f "target/release/等一下" ]] || [[ ! -f "target/release/三术" ]]; then
+if [[ ! -f "target/release/sanshu-ui" ]] || [[ ! -f "target/release/sanshu-mcp" ]]; then
     echo "❌ 构建失败"
     exit 1
 fi
@@ -32,8 +32,8 @@ fi
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
 
-cp "target/release/等一下" "$BIN_DIR/"
-cp "target/release/三术" "$BIN_DIR/"
+cp "target/release/sanshu-ui" "$BIN_DIR/等一下"
+cp "target/release/sanshu-mcp" "$BIN_DIR/三术"
 chmod +x "$BIN_DIR/等一下" "$BIN_DIR/三术"
 
 echo "✅ 安装完成！CLI 工具已安装到 $BIN_DIR"

@@ -43,20 +43,26 @@ Write-Host "🔨 构建二进制文件..." -ForegroundColor Yellow
 cargo build --release
 
 # 检查构建结果
-$BinaryPath = "target\release\三术.exe"
-if (-not (Test-Path $BinaryPath)) {
-    Write-Host "❌ 二进制文件构建失败: $BinaryPath" -ForegroundColor Red
+$UiBinaryPath = "target\release\sanshu-ui.exe"
+$McpBinaryPath = "target\release\sanshu-mcp.exe"
+
+if (-not (Test-Path $UiBinaryPath)) {
+    Write-Host "❌ UI 二进制文件构建失败: $UiBinaryPath" -ForegroundColor Red
+    exit 1
+}
+if (-not (Test-Path $McpBinaryPath)) {
+    Write-Host "❌ MCP 二进制文件构建失败: $McpBinaryPath" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✅ 二进制文件构建成功: $BinaryPath" -ForegroundColor Green
+Write-Host "✅ 二进制文件构建成功: $UiBinaryPath, $McpBinaryPath" -ForegroundColor Green
 
 # 如果只构建不安装，则在这里退出
 if ($BuildOnly) {
     Write-Host ""
     Write-Host "🎉 三术 构建完成！" -ForegroundColor Green
     Write-Host ""
-    Write-Host "📋 二进制文件位置: $BinaryPath" -ForegroundColor Cyan
+    Write-Host "📋 二进制文件位置: $UiBinaryPath, $McpBinaryPath" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "如需安装，请重新运行脚本而不使用 -BuildOnly 参数。"
     exit 0
@@ -71,14 +77,18 @@ Write-Host "📁 创建安装目录: $InstallDir" -ForegroundColor Yellow
 New-Item -ItemType Directory -Path $BinDir -Force | Out-Null
 
 # 复制二进制文件
-$MainExe = "$BinDir\sanshu.exe"
+$MainExe = "$BinDir\sanshu-ui.exe"
 $UiExe = "$BinDir\等一下.exe"
 $McpExe = "$BinDir\三术.exe"
+$UiExeNew = "$BinDir\sanshu-ui.exe"
+$McpExeNew = "$BinDir\sanshu-mcp.exe"
 
 Write-Host "📋 安装二进制文件..." -ForegroundColor Yellow
-Copy-Item $BinaryPath $MainExe -Force
-Copy-Item $BinaryPath $UiExe -Force
-Copy-Item $BinaryPath $McpExe -Force
+Copy-Item $UiBinaryPath $MainExe -Force
+Copy-Item $UiBinaryPath $UiExe -Force
+Copy-Item $UiBinaryPath $UiExeNew -Force
+Copy-Item $McpBinaryPath $McpExe -Force
+Copy-Item $McpBinaryPath $McpExeNew -Force
 
 Write-Host "✅ 二进制文件已安装到: $BinDir" -ForegroundColor Green
 

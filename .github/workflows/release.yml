@@ -198,17 +198,15 @@ jobs:
       - name: 安装前端依赖
         run: pnpm install
 
-      - name: 安装 Tauri CLI
-        run: cargo install tauri-cli --version "^2.0" --locked
-
       - name: 构建二进制文件
         shell: bash
         run: |
           echo "Building for ${{ matrix.name }}..."
+          pnpm build
           if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
-            cargo tauri build ${{ matrix.args }} --no-bundle
+            cargo build --release ${{ matrix.args }} --bins
           else
-            cargo tauri build --no-bundle
+            cargo build --release --bins
           fi
 
       - name: 打包产物
@@ -230,13 +228,17 @@ jobs:
 
           # 复制并压缩
           if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            cp "$TARGET_DIR/等一下.exe" cli-package/
-            cp "$TARGET_DIR/三术.exe" cli-package/
+            cp "$TARGET_DIR/sanshu-ui.exe" "cli-package/等一下.exe"
+            cp "$TARGET_DIR/sanshu-mcp.exe" "cli-package/三术.exe"
+            cp "$TARGET_DIR/sanshu-ui.exe" cli-package/
+            cp "$TARGET_DIR/sanshu-mcp.exe" cli-package/
             cd cli-package
             7z a ../sanshu-cli-${TAG_NAME}-${{ matrix.name }}.zip *
           else
-            cp "$TARGET_DIR/等一下" cli-package/
-            cp "$TARGET_DIR/三术" cli-package/
+            cp "$TARGET_DIR/sanshu-ui" "cli-package/等一下"
+            cp "$TARGET_DIR/sanshu-mcp" "cli-package/三术"
+            cp "$TARGET_DIR/sanshu-ui" cli-package/
+            cp "$TARGET_DIR/sanshu-mcp" cli-package/
             cd cli-package
             tar -czf ../sanshu-cli-${TAG_NAME}-${{ matrix.name }}.tar.gz *
           fi
