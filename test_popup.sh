@@ -94,20 +94,20 @@ check_global_cli() {
     local sanshu_found=false
     local dengxiaxia_found=false
 
-    # 检查三术
-    if command -v 三术 &> /dev/null; then
-        echo -e "${GREEN}✅ 找到全局 三术 CLI: $(which 三术)${NC}"
+    # 检查 sanshu-mcp
+    if command -v sanshu-mcp &> /dev/null; then
+        echo -e "${GREEN}✅ 找到全局 sanshu-mcp CLI: $(which sanshu-mcp)${NC}"
         sanshu_found=true
     else
-        echo -e "${RED}❌ 未找到全局 三术 CLI${NC}"
+        echo -e "${RED}❌ 未找到全局 sanshu-mcp CLI${NC}"
     fi
 
-    # 检查等一下
-    if command -v 等一下 &> /dev/null; then
-        echo -e "${GREEN}✅ 找到全局 等一下 CLI: $(which 等一下)${NC}"
+    # 检查 sanshu-ui
+    if command -v sanshu-ui &> /dev/null; then
+        echo -e "${GREEN}✅ 找到全局 sanshu-ui CLI: $(which sanshu-ui)${NC}"
         dengxiaxia_found=true
     else
-        echo -e "${RED}❌ 未找到全局 等一下 CLI${NC}"
+        echo -e "${RED}❌ 未找到全局 sanshu-ui CLI${NC}"
     fi
 
     if [[ "$sanshu_found" == false || "$dengxiaxia_found" == false ]]; then
@@ -188,8 +188,8 @@ check_cli_tools() {
 
     echo -e "${YELLOW}📋 检查本地CLI工具 (${BUILD_TYPE})...${NC}"
 
-    if [[ ! -f "$CLI_PATH/三术" ]]; then
-        echo -e "${RED}❌ 未找到 三术 CLI工具${NC}"
+    if [[ ! -f "$CLI_PATH/sanshu-mcp" ]]; then
+        echo -e "${RED}❌ 未找到 sanshu-mcp CLI工具${NC}"
         if [[ "$BUILD_TYPE" == "release" ]]; then
             echo -e "${YELLOW}💡 请先编译项目: cargo build --release${NC}"
         else
@@ -206,8 +206,8 @@ check_cli_tools() {
         fi
     fi
 
-    if [[ ! -f "$CLI_PATH/等一下" ]]; then
-        echo -e "${RED}❌ 未找到 等一下 CLI工具${NC}"
+    if [[ ! -f "$CLI_PATH/sanshu-ui" ]]; then
+        echo -e "${RED}❌ 未找到 sanshu-ui CLI工具${NC}"
         if [[ "$BUILD_TYPE" == "release" ]]; then
             echo -e "${YELLOW}💡 请先编译项目: cargo build --release${NC}"
         else
@@ -225,20 +225,20 @@ check_cli_tools() {
     fi
 
     # 检查执行权限
-    if [[ ! -x "$CLI_PATH/三术" ]]; then
-        echo -e "${YELLOW}⚠️  三术 CLI工具没有执行权限，正在添加...${NC}"
-        chmod +x "$CLI_PATH/三术"
+    if [[ ! -x "$CLI_PATH/sanshu-mcp" ]]; then
+        echo -e "${YELLOW}⚠️  sanshu-mcp CLI工具没有执行权限，正在添加...${NC}"
+        chmod +x "$CLI_PATH/sanshu-mcp"
     fi
 
-    if [[ ! -x "$CLI_PATH/等一下" ]]; then
-        echo -e "${YELLOW}⚠️  等一下 CLI工具没有执行权限，正在添加...${NC}"
-        chmod +x "$CLI_PATH/等一下"
+    if [[ ! -x "$CLI_PATH/sanshu-ui" ]]; then
+        echo -e "${YELLOW}⚠️  sanshu-ui CLI工具没有执行权限，正在添加...${NC}"
+        chmod +x "$CLI_PATH/sanshu-ui"
     fi
 
     echo -e "${GREEN}✅ 本地CLI工具检查完成 (${BUILD_TYPE})${NC}"
     echo -e "   构建类型: ${BUILD_TYPE}"
-    echo -e "   三术: $CLI_PATH/三术"
-    echo -e "   等一下: $CLI_PATH/等一下"
+    echo -e "   sanshu-mcp: $CLI_PATH/sanshu-mcp"
+    echo -e "   sanshu-ui: $CLI_PATH/sanshu-ui"
 }
 
 # 检查测试JSON文件
@@ -310,7 +310,7 @@ test_simple_popup() {
     echo ""
 
     # 启动弹窗
-    local cli_cmd=$(get_cli_command "等一下")
+    local cli_cmd=$(get_cli_command "sanshu-ui")
     echo -e "${GREEN}🎯 启动弹窗...${NC}"
     echo -e "${BLUE}执行命令: $cli_cmd --mcp-request test_simple_popup.json${NC}"
     if $cli_cmd --mcp-request "$PROJECT_ROOT/test_simple_popup.json"; then
@@ -332,7 +332,7 @@ test_markdown_popup() {
     echo ""
 
     # 启动弹窗
-    local cli_cmd=$(get_cli_command "等一下")
+    local cli_cmd=$(get_cli_command "sanshu-ui")
     echo -e "${GREEN}🎯 启动弹窗...${NC}"
     echo -e "${BLUE}执行命令: $cli_cmd --mcp-request test_markdown_popup.json${NC}"
     if $cli_cmd --mcp-request "$PROJECT_ROOT/test_markdown_popup.json"; then
@@ -372,7 +372,7 @@ EOF
     echo ""
     
     # 启动弹窗
-    local cli_cmd=$(get_cli_command "等一下")
+    local cli_cmd=$(get_cli_command "sanshu-ui")
     echo -e "${GREEN}🎯 启动自定义弹窗...${NC}"
     echo -e "${BLUE}执行命令: $cli_cmd --mcp-request $TEMP_FILE${NC}"
     if $cli_cmd --mcp-request "$TEMP_FILE"; then
@@ -415,25 +415,25 @@ show_cli_help() {
     echo -e "${YELLOW}📖 CLI工具帮助信息:${NC}"
     echo ""
 
-    local sanshu_cmd=$(get_cli_command "三术")
-    local dengxiaxia_cmd=$(get_cli_command "等一下")
+    local sanshu_cmd=$(get_cli_command "sanshu-mcp")
+    local dengxiaxia_cmd=$(get_cli_command "sanshu-ui")
 
-    echo -e "${BLUE}三术 CLI:${NC}"
+    echo -e "${BLUE}sanshu-mcp CLI:${NC}"
     echo -e "${BLUE}命令: $sanshu_cmd${NC}"
     if $sanshu_cmd --help 2>/dev/null; then
         echo -e "${GREEN}✅ 帮助信息显示完成${NC}"
     else
-        echo -e "${YELLOW}⚠️  三术 CLI 无帮助信息或不支持 --help 参数${NC}"
+        echo -e "${YELLOW}⚠️  sanshu-mcp CLI 无帮助信息或不支持 --help 参数${NC}"
         echo -e "${BLUE}尝试直接运行:${NC} $sanshu_cmd"
     fi
     echo ""
 
-    echo -e "${BLUE}等一下 CLI:${NC}"
+    echo -e "${BLUE}sanshu-ui CLI:${NC}"
     echo -e "${BLUE}命令: $dengxiaxia_cmd${NC}"
     if $dengxiaxia_cmd --help 2>/dev/null; then
         echo -e "${GREEN}✅ 帮助信息显示完成${NC}"
     else
-        echo -e "${YELLOW}⚠️  等一下 CLI 无帮助信息或不支持 --help 参数${NC}"
+        echo -e "${YELLOW}⚠️  sanshu-ui CLI 无帮助信息或不支持 --help 参数${NC}"
         echo -e "${BLUE}尝试直接运行:${NC} $dengxiaxia_cmd"
         echo -e "${BLUE}MCP请求参数:${NC} $dengxiaxia_cmd --mcp-request <json_file>"
     fi

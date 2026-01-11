@@ -32,9 +32,9 @@ fi
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
 
-cp "target/release/sanshu-ui" "$BIN_DIR/等一下"
-cp "target/release/sanshu-mcp" "$BIN_DIR/三术"
-chmod +x "$BIN_DIR/等一下" "$BIN_DIR/三术"
+cp "target/release/sanshu-ui" "$BIN_DIR/sanshu-ui"
+cp "target/release/sanshu-mcp" "$BIN_DIR/sanshu-mcp"
+chmod +x "$BIN_DIR/sanshu-ui" "$BIN_DIR/sanshu-mcp"
 
 echo "✅ 安装完成！CLI 工具已安装到 $BIN_DIR"
 
@@ -48,8 +48,8 @@ fi
 
 echo ""
 echo "📋 使用方法："
-echo "  三术        - 启动 MCP 服务器"
-echo "  等一下      - 启动弹窗界面"
+echo "  sanshu-mcp  - 启动 MCP 服务器"
+echo "  sanshu-ui   - 启动弹窗界面"
 echo ""
 echo "📝 MCP 客户端配置："
-echo '{"mcpServers": {"三术": {"command": "三术"}}}'
+echo '{"mcpServers": {"sanshu": {"command": "sanshu-mcp"}}}'

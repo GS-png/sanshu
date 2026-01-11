@@ -727,7 +727,7 @@ fn replace_all_files_windows(
         .map_err(|e| format!("无法获取当前可执行文件路径: {}", e))?;
     let exe_name = current_exe.file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or("等一下.exe");
+        .unwrap_or("sanshu-ui.exe");
 
     let script_path = app_dir.join("update_script.bat");
 

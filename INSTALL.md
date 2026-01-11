@@ -18,9 +18,9 @@ chmod +x install.sh
 
 从 [Releases](https://github.com/yuaotian/sanshu/releases) 页面下载对应平台的预编译版本：
 
-- **Linux**: `sanshu-linux-x86_64.tar.gz`
-- **macOS**: `sanshu-macos-universal.tar.gz`
-- **Windows**: `sanshu-windows-x86_64.zip`
+- **Linux**: `sanshu-cli-v{version}-linux-x86_64.tar.gz`
+- **macOS**: `sanshu-cli-v{version}-macos-aarch64.tar.gz` / `sanshu-cli-v{version}-macos-x86_64.tar.gz`
+- **Windows**: `sanshu-cli-v{version}-windows-x86_64.zip`
 
 #### 安装步骤：
 
@@ -30,8 +30,8 @@ chmod +x install.sh
 
 ```bash
 # Linux/macOS 示例
-tar -xzf sanshu-linux-x86_64.tar.gz
-sudo cp 等一下 三术 /usr/local/bin/
+tar -xzf sanshu-cli-v{version}-linux-x86_64.tar.gz
+sudo cp sanshu-ui sanshu-mcp /usr/local/bin/
 ```
 
 ```powershell
@@ -44,8 +44,8 @@ sudo cp 等一下 三术 /usr/local/bin/
 
 ```bash
 # 检查工具是否正确安装
-三术 --help
-等一下 --help
+sanshu-mcp --help
+sanshu-ui --help
 ```
 
 ## MCP 客户端配置
@@ -55,8 +55,8 @@ sudo cp 等一下 三术 /usr/local/bin/
 ```json
 {
   "mcpServers": {
-    "三术": {
-      "command": "三术"
+    "sanshu": {
+      "command": "sanshu-mcp"
     }
   }
 }
@@ -66,19 +66,19 @@ sudo cp 等一下 三术 /usr/local/bin/
 
 ### MCP 服务器模式
 ```bash
-三术  # 启动 MCP 服务器
+sanshu-mcp  # 启动 MCP 服务器
 ```
 
 ### 弹窗界面模式
 ```bash
-等一下                          # 启动设置界面
-等一下 --mcp-request file       # MCP 弹窗模式
+sanshu-ui                          # 启动设置界面
+sanshu-ui --mcp-request file       # MCP 弹窗模式
 ```
 
 ## 工具说明
 
-- **三术**: MCP 服务器，提供记忆管理和智能交互功能
-- **等一下**: 弹窗界面，用于用户交互和设置
+- **sanshu-mcp**: MCP 服务器，提供记忆管理和智能交互功能
+- **sanshu-ui**: 弹窗界面，用于用户交互和设置
 
 ## 系统要求
 
@@ -91,7 +91,7 @@ sudo cp 等一下 三术 /usr/local/bin/
 ### 权限问题
 ```bash
 # Linux/macOS
-chmod +x 等一下 三术
+chmod +x sanshu-ui sanshu-mcp
 ```
 
 ### PATH 问题
@@ -115,7 +115,7 @@ pnpm build
 cargo build --release
 
 # 安装
-cp target/release/等一下 target/release/三术 ~/.local/bin/
+cp target/release/sanshu-ui target/release/sanshu-mcp ~/.local/bin/
 ```
 
 ## 更新

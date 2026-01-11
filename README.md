@@ -296,7 +296,7 @@ brew tap yuaotian/tap
 brew install sanshu
 
 # 3. 验证安装（可选）
-sanshu --version
+sanshu-mcp --version
 ```
 
 **Homebrew 优势**：
@@ -320,33 +320,30 @@ brew uninstall sanshu
 brew untap yuaotian/tap
 ```
 
-> **💡 提示**：Homebrew 安装无需手动配置环境变量，安装完成后即可直接使用 `sanshu` 命令。
+> **💡 提示**：Homebrew 安装无需手动配置环境变量，安装完成后即可直接使用 `sanshu-ui` / `sanshu-mcp` 命令。
 
 #### 3️⃣ 验证安装
 
 打开**新的终端窗口**，运行以下命令验证配置是否成功：
 
 ```bash
-# 使用中文命令名
-三术 --version
-
-# 或使用拼音命令名
-sanshu --version
+# 验证 MCP 服务是否可用
+sanshu-mcp --version
 ```
 
-如果正确显示版本号（如 `sanshu 0.2.x`），说明环境变量配置成功。
+如果正确显示版本号，说明环境变量配置成功。
 
 #### ⚠️ 重要说明
 
 > **环境变量配置是 MCP 客户端正常工作的前提条件。**
 >
-> - ✅ **已配置环境变量**：MCP 配置中可直接使用 `"command": "三术"` 或 `"command": "sanshu"`
+> - ✅ **已配置环境变量**：MCP 配置中可直接使用 `"command": "sanshu-mcp"`
 > - ❌ **未配置环境变量**：需要在 MCP 配置中使用**完整路径**，例如：
 >   ```json
 >   {
 >     "mcpServers": {
 >       "sanshu": {
->         "command": "C:\\Program Files\\sanshu\\三术.exe"
+>         "command": "C:\\Program Files\\sanshu\\sanshu-mcp.exe"
 >       }
 >     }
 >   }
@@ -510,12 +507,12 @@ pnpm preview
 {
   "mcpServers": {
     "sanshu": {
-      "command": "三术"
+      "command": "sanshu-mcp"
     }
   }
 }
 ```
-PS：某些插件或者CLI工具可能无法正确识别`三术`中文，请自行用拼音`sanshu`作为命名，否则可能会导致无法正确识别。
+PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样填写完整路径。
 
 <div align="center">
   <img src="screenshots/setting.png" alt="设置页面" width="750" />
@@ -530,7 +527,7 @@ PS：某些插件或者CLI工具可能无法正确识别`三术`中文，请自�
 
 1. 打开编辑器的 **系统提示词 / 项目级默认提示词** 配置入口
 2. 将仓库根目录下 `sanshu_prompt_word.md` 的完整内容复制到该配置中
-3. 确保已按上文「配置 MCP 客户端」部分，将「三术」注册为 MCP 服务并能正常连接
+3. 确保已按上文「配置 MCP 客户端」部分，将 `sanshu-mcp` 注册为 MCP 服务并能正常连接
 4. 之后，在编辑器中调用 AI 时，它将自动遵循 AURA-X-KYS 协议
 
 ---

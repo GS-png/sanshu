@@ -56,10 +56,10 @@ if [[ "$OS" == "macos" ]]; then
     INSTALL_DIR="/usr/local/bin"
 
     echo "📋 安装 CLI 工具到 $INSTALL_DIR..."
-    sudo cp "target/release/sanshu-ui" "$INSTALL_DIR/等一下"
-    sudo cp "target/release/sanshu-mcp" "$INSTALL_DIR/三术"
-    sudo chmod +x "$INSTALL_DIR/等一下"
-    sudo chmod +x "$INSTALL_DIR/三术"
+    sudo cp "target/release/sanshu-ui" "$INSTALL_DIR/sanshu-ui"
+    sudo cp "target/release/sanshu-mcp" "$INSTALL_DIR/sanshu-mcp"
+    sudo chmod +x "$INSTALL_DIR/sanshu-ui"
+    sudo chmod +x "$INSTALL_DIR/sanshu-mcp"
 
     echo "✅ CLI 工具已安装到 $INSTALL_DIR"
 
@@ -73,10 +73,10 @@ elif [[ "$OS" == "linux" ]]; then
     mkdir -p "$BIN_DIR"
 
     # 复制CLI工具
-    cp "target/release/sanshu-ui" "$BIN_DIR/等一下"
-    cp "target/release/sanshu-mcp" "$BIN_DIR/三术"
-    chmod +x "$BIN_DIR/等一下"
-    chmod +x "$BIN_DIR/三术"
+    cp "target/release/sanshu-ui" "$BIN_DIR/sanshu-ui"
+    cp "target/release/sanshu-mcp" "$BIN_DIR/sanshu-mcp"
+    chmod +x "$BIN_DIR/sanshu-ui"
+    chmod +x "$BIN_DIR/sanshu-mcp"
 
     echo "✅ CLI 工具已安装到 $BIN_DIR"
 
@@ -99,11 +99,11 @@ echo "🎉 三术 MCP 工具安装完成！"
 echo ""
 echo "📋 使用方法："
 echo "  💻 MCP 服务器模式:"
-echo "    三术                            - 启动 MCP 服务器"
+echo "    sanshu-mcp                       - 启动 MCP 服务器"
 echo ""
 echo "  🎨 弹窗界面模式:"
-echo "    等一下                          - 启动设置界面"
-echo "    等一下 --mcp-request file       - MCP 弹窗模式"
+echo "    sanshu-ui                        - 启动设置界面"
+echo "    sanshu-ui --mcp-request file     - MCP 弹窗模式"
 echo ""
 echo "📝 配置 MCP 客户端："
 echo "将以下内容添加到您的 MCP 客户端配置中："
@@ -111,8 +111,8 @@ echo ""
 cat << 'EOF'
 {
   "mcpServers": {
-    "三术": {
-      "command": "三术"
+    "sanshu": {
+      "command": "sanshu-mcp"
     }
   }
 }
@@ -120,7 +120,7 @@ EOF
 echo ""
 echo "💡 重要说明："
 echo "  • 两个CLI工具必须在同一目录下才能正常工作"
-echo "  • '三术' 是MCP服务器，'等一下' 是弹窗界面"
+echo "  • 'sanshu-mcp' 是MCP服务器，'sanshu-ui' 是弹窗界面"
 echo "  • 无需安装完整应用，只需要这两个CLI工具即可"
 echo ""
 

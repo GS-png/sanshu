@@ -116,21 +116,12 @@ pub fn find_ui_command() -> Result<String> {
             if local_ui_path.exists() && is_executable(&local_ui_path) {
                 return Ok(local_ui_path.to_string_lossy().to_string());
             }
-            // Fallback to old name for compatibility
-            let legacy_ui_path = exe_dir.join("等一下");
-            if legacy_ui_path.exists() && is_executable(&legacy_ui_path) {
-                return Ok(legacy_ui_path.to_string_lossy().to_string());
-            }
         }
     }
 
     // 2. Try global command
     if test_command_available("sanshu-ui") {
         return Ok("sanshu-ui".to_string());
-    }
-    // Fallback to old name for compatibility
-    if test_command_available("等一下") {
-        return Ok("等一下".to_string());
     }
 
     // 3. Return detailed error

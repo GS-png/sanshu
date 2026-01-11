@@ -78,17 +78,11 @@ New-Item -ItemType Directory -Path $BinDir -Force | Out-Null
 
 # 复制二进制文件
 $MainExe = "$BinDir\sanshu-ui.exe"
-$UiExe = "$BinDir\等一下.exe"
-$McpExe = "$BinDir\三术.exe"
-$UiExeNew = "$BinDir\sanshu-ui.exe"
-$McpExeNew = "$BinDir\sanshu-mcp.exe"
+$McpExe = "$BinDir\sanshu-mcp.exe"
 
 Write-Host "📋 安装二进制文件..." -ForegroundColor Yellow
 Copy-Item $UiBinaryPath $MainExe -Force
-Copy-Item $UiBinaryPath $UiExe -Force
-Copy-Item $UiBinaryPath $UiExeNew -Force
 Copy-Item $McpBinaryPath $McpExe -Force
-Copy-Item $McpBinaryPath $McpExeNew -Force
 
 Write-Host "✅ 二进制文件已安装到: $BinDir" -ForegroundColor Green
 
@@ -136,9 +130,9 @@ Write-Host ""
 Write-Host "📋 使用方法：" -ForegroundColor Cyan
 Write-Host "  🖥️  GUI模式: 从开始菜单打开 '三术'" -ForegroundColor White
 Write-Host "  💻 命令行模式:" -ForegroundColor White
-Write-Host "    等一下                          - 启动 UI 界面" -ForegroundColor White
-Write-Host "    等一下 --mcp-request file       - MCP 弹窗模式" -ForegroundColor White
-Write-Host "    三术                            - 启动 MCP 服务器" -ForegroundColor White
+Write-Host "    sanshu-ui                       - 启动 UI 界面" -ForegroundColor White
+Write-Host "    sanshu-ui --mcp-request file    - MCP 弹窗模式" -ForegroundColor White
+Write-Host "    sanshu-mcp                      - 启动 MCP 服务器" -ForegroundColor White
 Write-Host ""
 Write-Host "📝 配置 MCP 客户端：" -ForegroundColor Cyan
 Write-Host "将以下内容添加到您的 MCP 客户端配置中：" -ForegroundColor White
@@ -146,8 +140,8 @@ Write-Host ""
 Write-Host @"
 {
   "mcpServers": {
-    "三术": {
-      "command": "三术"
+    "sanshu": {
+      "command": "sanshu-mcp"
     }
   }
 }
