@@ -35,12 +35,16 @@ if (-not (Test-Command "pnpm")) {
 }
 
 # 构建前端
-Write-Host "📦 构建前端资源..." -ForegroundColor Yellow
-pnpm build
-
 # 构建二进制文件
 Write-Host "🔨 构建二进制文件..." -ForegroundColor Yellow
-cargo build --release
+try {
+    cargo tauri --version | Out-Null
+} catch {
+    cargo install tauri-cli --locked --version 2.9.1
+}
+
+cargo tauri build --no-bundle
+cargo build --release --bin sanshu-mcp
 
 # 检查构建结果
 $UiBinaryPath = "target\release\sanshu-ui.exe"

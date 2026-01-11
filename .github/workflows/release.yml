@@ -202,11 +202,13 @@ jobs:
         shell: bash
         run: |
           echo "Building for ${{ matrix.name }}..."
-          pnpm build
+          cargo install tauri-cli --locked --version 2.9.1
           if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
-            cargo build --release ${{ matrix.args }} --bins
+            cargo tauri build --no-bundle ${{ matrix.args }}
+            cargo build --release ${{ matrix.args }} --bin sanshu-mcp
           else
-            cargo build --release --bins
+            cargo tauri build --no-bundle
+            cargo build --release --bin sanshu-mcp
           fi
 
       - name: 打包产物

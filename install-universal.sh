@@ -31,13 +31,14 @@ echo "🔧 检查必要工具..."
 check_command "cargo"
 check_command "pnpm"
 
-# 构建前端资源（MCP弹窗界面需要）
-echo "📦 构建前端资源..."
-pnpm build
-
 # 构建MCP CLI工具
 echo "🔨 构建 MCP CLI 工具..."
-cargo build --release
+if ! cargo tauri --version >/dev/null 2>&1; then
+    cargo install tauri-cli --locked --version 2.9.1
+fi
+
+cargo tauri build --no-bundle
+cargo build --release --bin sanshu-mcp
 
 # 检查构建结果
 if [[ ! -f "target/release/sanshu-ui" ]] || [[ ! -f "target/release/sanshu-mcp" ]]; then
