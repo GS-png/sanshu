@@ -1,8 +1,14 @@
 use std::collections::HashMap;
+use std::path::PathBuf;
 use tauri::{AppHandle, State};
 
 use crate::config::{AppState, save_config};
 use crate::constants::mcp;
+use crate::mcp::{
+    delete_history_entries_by_time_range, delete_history_entry, export_history_entry_zip,
+    export_history_by_time_range_zip, get_history_entry, history_base_dir, list_history_entries,
+    HistoryEntryDetail, HistoryEntrySummary,
+};
 // use crate::mcp::tools::acemcp; // 已迁移到独立模块
 
 /// MCP工具配置
@@ -144,6 +150,84 @@ pub async fn reset_mcp_tools_config(
     // 使用日志记录配置重置（在 MCP 模式下会自动输出到文件）
     log::info!("MCP工具配置已重置为默认值");
     Ok(())
+}
+
+/// 获取交互等待阈值（ms）
+#[tauri::command]
+pub async fn get_interaction_wait_ms(state: State<'_, AppState>) -> Result<u64, String> {
+    let config = state.config.lock().map_err(|e| format!("获取配置失败: {}", e))?;
+    Ok(config.mcp_config.interaction_wait_ms)
+}
+
+/// 设置交互等待阈值（ms）
+#[tauri::command]
+pub async fn set_interaction_wait_ms(
+    wait_ms: u64,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
+    {
+        let mut config = state.config.lock().map_err(|e| format!("获取配置失败: {}", e))?;
+        config.mcp_config.interaction_wait_ms = wait_ms;
+    }
+
+    save_config(&state, &app)
+        .await
+        .map_err(|e| format!("保存配置失败: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn list_mcp_history_entries(limit: Option<u32>) -> Result<Vec<HistoryEntrySummary>, String> {
+    let limit = limit.unwrap_or(200).min(2000) as usize;
+    list_history_entries(limit).map_err(|e| format!("获取历史记录失败: {}", e))
+}
+
+#[tauri::command]
+pub async fn get_mcp_history_entry(id: String) -> Result<HistoryEntryDetail, String> {
+    get_history_entry(id).map_err(|e| format!("获取历史详情失败: {}", e))
+}
+
+#[tauri::command]
+pub async fn delete_mcp_history_entry(id: String) -> Result<(), String> {
+    delete_history_entry(id).map_err(|e| format!("删除历史记录失败: {}", e))
+}
+
+#[tauri::command]
+pub async fn delete_mcp_history_by_time_range(
+    start: Option<String>,
+    end: Option<String>,
+) -> Result<u32, String> {
+    delete_history_entries_by_time_range(start, end)
+        .map_err(|e| format!("按时间段删除失败: {}", e))
+}
+
+#[tauri::command]
+pub async fn export_mcp_history_entry_zip(id: String) -> Result<String, String> {
+    let target_dir: PathBuf = dirs::download_dir()
+        .or_else(dirs::data_dir)
+        .or_else(dirs::config_dir)
+        .unwrap_or_else(|| history_base_dir().unwrap_or_else(|_| PathBuf::from(".")));
+
+    export_history_entry_zip(id, target_dir)
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| format!("导出失败: {}", e))
+}
+
+#[tauri::command]
+pub async fn export_mcp_history_by_time_range_zip(
+    start: Option<String>,
+    end: Option<String>,
+) -> Result<String, String> {
+    let target_dir: PathBuf = dirs::download_dir()
+        .or_else(dirs::data_dir)
+        .or_else(dirs::config_dir)
+        .unwrap_or_else(|| history_base_dir().unwrap_or_else(|_| PathBuf::from(".")));
+
+    export_history_by_time_range_zip(start, end, target_dir)
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| format!("导出失败: {}", e))
 }
 
 // acemcp 相关命令已迁移

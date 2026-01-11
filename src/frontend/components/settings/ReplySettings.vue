@@ -14,11 +14,17 @@ const localConfig = ref<ReplyConfig>({
   continue_prompt: '请按照最佳实践继续',
 })
 
+const interactionWaitSeconds = ref(1800)
+
 // 加载配置
 async function loadConfig() {
   try {
     const config = await invoke('get_reply_config')
     localConfig.value = config as ReplyConfig
+
+    const waitMs = await invoke('get_interaction_wait_ms')
+    const ms = Number(waitMs)
+    interactionWaitSeconds.value = Number.isFinite(ms) ? Math.max(0, Math.round(ms / 1000)) : 1800
   }
   catch (error) {
     console.error('加载继续回复配置失败:', error)
@@ -32,6 +38,16 @@ async function updateConfig() {
   }
   catch (error) {
     console.error('保存继续回复配置失败:', error)
+  }
+}
+
+async function updateInteractionWaitSeconds() {
+  try {
+    const seconds = Math.max(0, Math.floor(interactionWaitSeconds.value || 0))
+    await invoke('set_interaction_wait_ms', { waitMs: seconds * 1000 })
+  }
+  catch (error) {
+    console.error('保存交互等待阈值失败:', error)
   }
 }
 
@@ -81,6 +97,28 @@ onMounted(() => {
         size="small"
         placeholder="请按照最佳实践继续"
         @input="updateConfig"
+      />
+    </div>
+
+    <div>
+      <div class="flex items-center mb-3">
+        <div class="w-1.5 h-1.5 bg-info rounded-full mr-3 flex-shrink-0" />
+        <div>
+          <div class="text-sm font-medium leading-relaxed">
+            交互等待阈值（秒）
+          </div>
+          <div class="text-xs opacity-60">
+            用于避免一次工具调用卡太久被 IDE 自动结束；建议 8-20，设为 0 表示不限制
+          </div>
+        </div>
+      </div>
+      <n-input-number
+        v-model:value="interactionWaitSeconds"
+        size="small"
+        :min="0"
+        :step="1"
+        placeholder="例如 15"
+        @update:value="updateInteractionWaitSeconds"
       />
     </div>
   </n-space>

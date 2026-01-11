@@ -116,6 +116,41 @@ const { pasteShortcut } = useKeyboard()
 
 const message = useMessage()
 
+let pasteTargetEl: HTMLTextAreaElement | null = null
+let pasteListener: ((event: ClipboardEvent) => void) | null = null
+
+function getTextareaElement(): HTMLTextAreaElement | null {
+  try {
+    const inputElement = (textareaRef.value as any)?.$el?.querySelector('textarea') || (textareaRef.value as any)?.inputElRef
+    return inputElement || null
+  }
+  catch {
+    return null
+  }
+}
+
+function cleanupPasteListener() {
+  if (pasteTargetEl && pasteListener) {
+    pasteTargetEl.removeEventListener('paste', pasteListener)
+  }
+  pasteTargetEl = null
+  pasteListener = null
+}
+
+async function setupPasteListener() {
+  await nextTick()
+  const el = getTextareaElement()
+  if (!el)
+    return
+  if (pasteTargetEl === el)
+    return
+
+  cleanupPasteListener()
+  pasteTargetEl = el
+  pasteListener = (event: ClipboardEvent) => handleImagePaste(event)
+  pasteTargetEl.addEventListener('paste', pasteListener)
+}
+
 // 计算属性
 const hasOptions = computed(() => (props.request?.predefined_options?.length ?? 0) > 0)
 const canSubmit = computed(() => {
@@ -187,23 +222,60 @@ function handleOptionToggle(option: string) {
 // 移除了所有拖拽和上传组件相关的代码
 
 function handleImagePaste(event: ClipboardEvent) {
-  const items = event.clipboardData?.items
-  let hasImage = false
+  const clipboardData = event.clipboardData
+  if (!clipboardData)
+    return
 
-  if (items) {
-    for (const item of items) {
-      if (item.type.includes('image')) {
-        hasImage = true
+  const imageFiles: File[] = []
+
+  if (clipboardData.files && clipboardData.files.length > 0) {
+    for (const file of Array.from(clipboardData.files)) {
+      if (file.type.startsWith('image/'))
+        imageFiles.push(file)
+    }
+  }
+
+  if (imageFiles.length === 0 && clipboardData.items) {
+    for (const item of Array.from(clipboardData.items)) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
         const file = item.getAsFile()
-        if (file) {
-          handleImageFiles([file])
-        }
+        if (file)
+          imageFiles.push(file)
       }
     }
   }
 
-  if (hasImage) {
+  if (imageFiles.length > 0) {
     event.preventDefault()
+    handleImageFiles(imageFiles)
+    return
+  }
+
+  const html = clipboardData.getData('text/html')
+  if (html) {
+    const dataUrls: string[] = []
+    const imgSrcRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
+    let match: RegExpExecArray | null
+    while ((match = imgSrcRegex.exec(html)) !== null) {
+      const src = match[1]
+      if (src && src.startsWith('data:image/'))
+        dataUrls.push(src)
+    }
+
+    if (dataUrls.length > 0) {
+      event.preventDefault()
+      let addedCount = 0
+      for (const dataUrl of dataUrls) {
+        if (!uploadedImages.value.includes(dataUrl)) {
+          uploadedImages.value.push(dataUrl)
+          addedCount += 1
+        }
+      }
+      if (addedCount > 0) {
+        message.success(`已添加 ${addedCount} 张图片`)
+        emitUpdate()
+      }
+    }
   }
 }
 
@@ -556,6 +628,8 @@ onMounted(async () => {
   console.log('组件挂载，开始加载prompt')
   await loadCustomPrompts()
 
+  await setupPasteListener()
+
   // 监听自定义prompt更新事件
   unlistenCustomPromptUpdate = await listen('custom-prompt-updated', () => {
     console.log('收到自定义prompt更新事件，重新加载数据')
@@ -566,6 +640,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  cleanupPasteListener()
   // 清理事件监听器
   if (unlistenCustomPromptUpdate) {
     unlistenCustomPromptUpdate()
@@ -772,7 +847,6 @@ defineExpose({
         :disabled="submitting"
         :autosize="{ minRows: 3, maxRows: 6 }"
         data-guide="popup-input"
-        @paste="handleImagePaste"
       />
     </div>
 

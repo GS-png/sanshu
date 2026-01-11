@@ -7,9 +7,36 @@ use std::process::{Command, Stdio};
 use std::fs;
 use tokio::time::{sleep, Duration, Instant};
 
+use crate::config::load_standalone_config;
 use crate::mcp::{ZhiRequest, PopupRequest};
+use crate::mcp::save_history_entry;
 use crate::mcp::handlers::{find_ui_command, parse_mcp_response};
 use crate::mcp::utils::{generate_request_id, popup_error};
+
+fn should_skip_history_save(response_str: &str) -> bool {
+    let s = response_str.trim();
+    s.is_empty() || s == "CANCELLED" || s == "\"CANCELLED\""
+}
+
+fn try_save_history(request: Option<PopupRequest>, response_str: &str) {
+    if should_skip_history_save(response_str) {
+        return;
+    }
+
+    let s = response_str.trim();
+    let response_value: serde_json::Value = serde_json::from_str(s)
+        .unwrap_or_else(|_| serde_json::Value::String(s.to_string()));
+
+    if let Err(e) = save_history_entry(request, response_value) {
+        log::warn!("保存 MCP 历史记录失败: {}", e);
+    }
+}
+
+fn load_request_from_file(path: &str) -> Option<PopupRequest> {
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|s| serde_json::from_str::<PopupRequest>(&s).ok())
+}
 
 /// Global task storage for async interaction
 static PENDING_TASKS: LazyLock<Arc<Mutex<HashMap<String, PendingTask>>>> = 
@@ -20,6 +47,7 @@ struct PendingTask {
     request_file: String,
     response_file: String,
     status: TaskStatus,
+    ui_pid: Option<u32>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -27,6 +55,8 @@ struct PersistedPendingTask {
     task_id: String,
     request_file: String,
     response_file: String,
+    #[serde(default)]
+    ui_pid: Option<u32>,
 }
 
 fn persisted_task_path() -> std::path::PathBuf {
@@ -62,6 +92,24 @@ fn clear_persisted_task_if_matches(task_id: &str) {
     }
 }
 
+fn is_ui_process_running(pid: u32) -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::path::Path::new(&format!("/proc/{}", pid)).exists()
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = pid;
+        true
+    }
+}
+
+fn cleanup_task_files(task_id: &str, task: &PendingTask) {
+    let _ = fs::remove_file(&task.request_file);
+    let _ = fs::remove_file(&task.response_file);
+    clear_persisted_task_if_matches(task_id);
+}
+
 #[derive(Clone, PartialEq)]
 enum TaskStatus {
     Pending,
@@ -83,14 +131,41 @@ impl InteractionTool {
             let mut tasks = PENDING_TASKS.lock().unwrap();
             if tasks.is_empty() {
                 if let Some(persisted) = load_persisted_task() {
-                    tasks.insert(
-                        persisted.task_id.clone(),
-                        PendingTask {
-                            request_file: persisted.request_file,
-                            response_file: persisted.response_file,
-                            status: TaskStatus::Pending,
-                        },
-                    );
+                    if persisted.ui_pid.is_none() {
+                        let _ = fs::remove_file(&persisted.request_file);
+                        let _ = fs::remove_file(&persisted.response_file);
+                        clear_persisted_task_if_matches(&persisted.task_id);
+                    } else {
+                        tasks.insert(
+                            persisted.task_id.clone(),
+                            PendingTask {
+                                request_file: persisted.request_file,
+                                response_file: persisted.response_file,
+                                status: TaskStatus::Pending,
+                                ui_pid: persisted.ui_pid,
+                            },
+                        );
+                    }
+                }
+            }
+
+            let stale_ids: Vec<String> = tasks
+                .iter()
+                .filter_map(|(task_id, task)| {
+                    if task.status == TaskStatus::Pending {
+                        if let Some(pid) = task.ui_pid {
+                            if !is_ui_process_running(pid) {
+                                return Some(task_id.clone());
+                            }
+                        }
+                    }
+                    None
+                })
+                .collect();
+
+            for task_id in stale_ids {
+                if let Some(task) = tasks.remove(&task_id) {
+                    cleanup_task_files(&task_id, &task);
                 }
             }
 
@@ -148,14 +223,7 @@ impl InteractionTool {
         let command_path = find_ui_command()
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
 
-        // Launch UI in background (non-blocking)
-        persist_task(&PersistedPendingTask {
-            task_id: task_id.clone(),
-            request_file: request_file.to_string_lossy().to_string(),
-            response_file: response_file.to_string_lossy().to_string(),
-        })?;
-
-        let spawn_result = Command::new(&command_path)
+        let mut child = Command::new(&command_path)
             .arg("--mcp-request")
             .arg(request_file.to_string_lossy().to_string())
             .arg("--response-file")
@@ -164,23 +232,32 @@ impl InteractionTool {
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
-            .map_err(|e| McpError::internal_error(format!("Failed to launch UI: {}", e), None));
+            .map_err(|e| McpError::internal_error(format!("Failed to launch UI: {}", e), None))?;
 
-        if let Err(e) = spawn_result {
-            clear_persisted_task_if_matches(&task_id);
-            let _ = fs::remove_file(&request_file);
-            let _ = fs::remove_file(&response_file);
-            return Err(e);
-        }
+        let ui_pid = Some(child.id());
+        std::thread::spawn(move || {
+            let _ = child.wait();
+        });
+
+        persist_task(&PersistedPendingTask {
+            task_id: task_id.clone(),
+            request_file: request_file.to_string_lossy().to_string(),
+            response_file: response_file.to_string_lossy().to_string(),
+            ui_pid,
+        })?;
 
         // Store task info
         {
             let mut tasks = PENDING_TASKS.lock().unwrap();
-            tasks.insert(task_id.clone(), PendingTask {
-                request_file: request_file.to_string_lossy().to_string(),
-                response_file: response_file.to_string_lossy().to_string(),
-                status: TaskStatus::Pending,
-            });
+            tasks.insert(
+                task_id.clone(),
+                PendingTask {
+                    request_file: request_file.to_string_lossy().to_string(),
+                    response_file: response_file.to_string_lossy().to_string(),
+                    status: TaskStatus::Pending,
+                    ui_pid,
+                },
+            );
         }
 
         // Return immediately with task_id and instructions
@@ -194,8 +271,143 @@ impl InteractionTool {
             DO NOT poll or call get_result repeatedly.",
             task_id, command_path, task_id
         );
-        
+
         Ok(CallToolResult::success(vec![Content::text(response_text)]))
+    }
+
+    pub async fn prompt_sync(
+        request: ZhiRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let existing_task_id = {
+            let mut tasks = PENDING_TASKS.lock().unwrap();
+            if tasks.is_empty() {
+                if let Some(persisted) = load_persisted_task() {
+                    if persisted.ui_pid.is_none() {
+                        let _ = fs::remove_file(&persisted.request_file);
+                        let _ = fs::remove_file(&persisted.response_file);
+                        clear_persisted_task_if_matches(&persisted.task_id);
+                    } else {
+                    tasks.insert(
+                        persisted.task_id.clone(),
+                        PendingTask {
+                            request_file: persisted.request_file,
+                            response_file: persisted.response_file,
+                            status: TaskStatus::Pending,
+                            ui_pid: persisted.ui_pid,
+                        },
+                    );
+                    }
+                }
+            }
+
+            let stale_ids: Vec<String> = tasks
+                .iter()
+                .filter_map(|(task_id, task)| {
+                    if task.status == TaskStatus::Pending {
+                        if let Some(pid) = task.ui_pid {
+                            if !is_ui_process_running(pid) {
+                                return Some(task_id.clone());
+                            }
+                        }
+                    }
+                    None
+                })
+                .collect();
+
+            for task_id in stale_ids {
+                if let Some(task) = tasks.remove(&task_id) {
+                    cleanup_task_files(&task_id, &task);
+                }
+            }
+
+            tasks
+                .iter()
+                .find_map(|(task_id, task)| {
+                    if task.status == TaskStatus::Pending {
+                        Some(task_id.clone())
+                    } else {
+                        None
+                    }
+                })
+        };
+
+        if let Some(task_id) = existing_task_id {
+            return Self::get_result(task_id).await;
+        }
+
+        let task_id = generate_request_id();
+
+        let popup_request = PopupRequest {
+            id: task_id.clone(),
+            message: request.message,
+            predefined_options: if request.choices.is_empty() {
+                None
+            } else {
+                Some(request.choices)
+            },
+            is_markdown: request.format,
+            project_root_path: request.project_root_path,
+        };
+
+        let temp_dir = std::env::temp_dir();
+        let request_file = temp_dir.join(format!("mcp_request_{}.json", task_id));
+        let response_file = temp_dir.join(format!("mcp_response_{}.json", task_id));
+
+        let request_json = serde_json::to_string_pretty(&popup_request)
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        fs::write(&request_file, request_json)
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+
+        let _ = fs::remove_file(&response_file);
+
+        let command_path = find_ui_command()
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+
+        let mut child = Command::new(&command_path)
+            .arg("--mcp-request")
+            .arg(request_file.to_string_lossy().to_string())
+            .arg("--response-file")
+            .arg(response_file.to_string_lossy().to_string())
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .map_err(|e| McpError::internal_error(format!("Failed to launch UI: {}", e), None))?;
+
+        let ui_pid = Some(child.id());
+        std::thread::spawn(move || {
+            let _ = child.wait();
+        });
+
+        persist_task(&PersistedPendingTask {
+            task_id: task_id.clone(),
+            request_file: request_file.to_string_lossy().to_string(),
+            response_file: response_file.to_string_lossy().to_string(),
+            ui_pid,
+        })?;
+
+        {
+            let mut tasks = PENDING_TASKS.lock().unwrap();
+            tasks.insert(
+                task_id.clone(),
+                PendingTask {
+                    request_file: request_file.to_string_lossy().to_string(),
+                    response_file: response_file.to_string_lossy().to_string(),
+                    status: TaskStatus::Pending,
+                    ui_pid,
+                },
+            );
+        }
+
+        let task = PendingTask {
+            request_file: request_file.to_string_lossy().to_string(),
+            response_file: response_file.to_string_lossy().to_string(),
+            status: TaskStatus::Pending,
+            ui_pid,
+        };
+
+        let _ = task;
+        Self::get_result(task_id).await
     }
 
     /// Get result of a pending interaction task
@@ -212,6 +424,7 @@ impl InteractionTool {
                         request_file: persisted.request_file,
                         response_file: persisted.response_file,
                         status: TaskStatus::Pending,
+                        ui_pid: persisted.ui_pid,
                     };
                     tasks.insert(task_id.clone(), task.clone());
                     Some(task)
@@ -235,7 +448,12 @@ impl InteractionTool {
                     .or_else(|_| std::env::var("MCP_GET_RESULT_WAIT_MS"))
                     .ok()
                     .and_then(|s| s.parse::<u64>().ok())
-                    .unwrap_or(0);
+                    .unwrap_or_else(|| {
+                        load_standalone_config()
+                            .ok()
+                            .map(|c| c.mcp_config.interaction_wait_ms)
+                            .unwrap_or(0)
+                    });
                 let max_wait_ms: Option<u64> = if max_wait_ms_raw == 0 {
                     None
                 } else {
@@ -247,6 +465,8 @@ impl InteractionTool {
                 loop {
                     if let Ok(content) = fs::read_to_string(&task.response_file) {
                         if !content.trim().is_empty() {
+                            let request = load_request_from_file(&task.request_file);
+                            try_save_history(request, &content);
                             let result = parse_mcp_response(&content)?;
 
                             let _ = fs::remove_file(&task.request_file);
@@ -259,6 +479,28 @@ impl InteractionTool {
 
                             return Ok(CallToolResult::success(result));
                         }
+                    }
+
+                    if let Some(pid) = task.ui_pid {
+                        if !is_ui_process_running(pid) {
+                            cleanup_task_files(&task_id, &task);
+                            {
+                                let mut tasks = PENDING_TASKS.lock().unwrap();
+                                tasks.remove(&task_id);
+                            }
+                            return Ok(CallToolResult::success(vec![Content::text(
+                                "Operation cancelled by user".to_string(),
+                            )]));
+                        }
+                    } else {
+                        cleanup_task_files(&task_id, &task);
+                        {
+                            let mut tasks = PENDING_TASKS.lock().unwrap();
+                            tasks.remove(&task_id);
+                        }
+                        return Ok(CallToolResult::success(vec![Content::text(
+                            "Operation cancelled by user".to_string(),
+                        )]));
                     }
 
                     if let Some(max_wait_ms) = max_wait_ms {
@@ -314,6 +556,7 @@ impl InteractionTool {
 
         match crate::mcp::handlers::create_tauri_popup(&popup_request) {
             Ok(response) => {
+                try_save_history(Some(popup_request.clone()), &response);
                 let content = parse_mcp_response(&response)?;
                 Ok(CallToolResult::success(content))
             }

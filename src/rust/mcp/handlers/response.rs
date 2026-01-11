@@ -5,7 +5,8 @@ use crate::mcp::types::{McpResponse, McpResponseContent};
 
 /// Parse MCP response content
 pub fn parse_mcp_response(response: &str) -> Result<Vec<Content>, McpError> {
-    if response.trim() == "CANCELLED" {
+    let trimmed = response.trim();
+    if trimmed == "CANCELLED" || trimmed == "\"CANCELLED\"" {
         return Ok(vec![Content::text("Operation cancelled by user".to_string())]);
     }
 

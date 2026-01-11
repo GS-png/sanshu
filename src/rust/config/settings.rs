@@ -126,6 +126,8 @@ pub struct McpConfig {
     pub acemcp_proxy_username: Option<String>, // 代理用户名（可选）
     pub acemcp_proxy_password: Option<String>, // 代理密码（可选）
     pub context7_api_key: Option<String>, // Context7 API密钥 (可选，免费使用时可为空)
+    #[serde(default = "default_interaction_wait_ms")]
+    pub interaction_wait_ms: u64, // 单次等待阈值（毫秒），0 表示无限等待
 }
 
 
@@ -302,7 +304,12 @@ pub fn default_mcp_config() -> McpConfig {
         acemcp_proxy_username: None,
         acemcp_proxy_password: None,
         context7_api_key: None,
+        interaction_wait_ms: default_interaction_wait_ms(),
     }
+}
+
+pub fn default_interaction_wait_ms() -> u64 {
+    1_800_000
 }
 
 pub fn default_telegram_config() -> TelegramConfig {

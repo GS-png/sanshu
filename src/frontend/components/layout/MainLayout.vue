@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { useMessage } from 'naive-ui'
 import { ref } from 'vue'
 import IntroTab from '../tabs/IntroTab.vue'
+import HistoryTab from '../tabs/HistoryTab.vue'
 import McpToolsTab from '../tabs/McpToolsTab.vue'
 import PromptsTab from '../tabs/PromptsTab.vue'
 import SettingsTab from '../tabs/SettingsTab.vue'
@@ -143,6 +144,9 @@ function testPopup() {
         <n-tabs v-model:value="activeTab" type="segment" size="small" justify-content="center" data-guide="tabs">
           <n-tab-pane name="intro" tab="介绍">
             <IntroTab />
+          </n-tab-pane>
+          <n-tab-pane name="history" tab="历史">
+            <HistoryTab />
           </n-tab-pane>
           <n-tab-pane name="mcp-tools" tab="MCP 工具">
             <McpToolsTab />

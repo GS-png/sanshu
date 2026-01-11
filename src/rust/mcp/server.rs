@@ -112,11 +112,11 @@ impl ServerHandler for ZhiServer {
             "required": ["message"]
         });
 
-        if let serde_json::Value::Object(schema_map) = prompt_schema {
+        if let serde_json::Value::Object(ref schema_map) = prompt_schema {
             tools.push(Tool {
                 name: Cow::Borrowed("prompt"),
                 description: Some(Cow::Borrowed("Start an interactive prompt. Returns a task_id immediately. IMPORTANT: Do NOT call prompt repeatedly. If a task is already pending, prompt will return the existing task_id. After the user completes input, call get_result with this task_id.")),
-                input_schema: Arc::new(schema_map),
+                input_schema: Arc::new(schema_map.clone()),
                 annotations: Some(ToolAnnotations {
                     title: Some("Interactive Prompt".to_string()),
                     read_only_hint: Some(true),
@@ -128,6 +128,26 @@ impl ServerHandler for ZhiServer {
                 meta: None,
                 output_schema: None,
                 title: Some("Interactive Prompt".to_string()),
+            });
+        }
+
+        // Sync prompt tool - blocks until user submits, returns result in one call
+        if let serde_json::Value::Object(ref schema_map) = prompt_schema {
+            tools.push(Tool {
+                name: Cow::Borrowed("prompt_sync"),
+                description: Some(Cow::Borrowed("Start an interactive prompt and wait for user input. NOTE: To avoid long blocking, this may return WAITING after a configured time slice (SANSHU_GET_RESULT_WAIT_MS / MCP_GET_RESULT_WAIT_MS or UI setting interaction_wait_ms). If it returns WAITING, call get_result with the task_id to retrieve the final response after the user submits.")),
+                input_schema: Arc::new(schema_map.clone()),
+                annotations: Some(ToolAnnotations {
+                    title: Some("Interactive Prompt (Sync)".to_string()),
+                    read_only_hint: Some(true),
+                    destructive_hint: Some(false),
+                    idempotent_hint: Some(false),
+                    open_world_hint: Some(false),
+                }),
+                icons: None,
+                meta: None,
+                output_schema: None,
+                title: Some("Interactive Prompt (Sync)".to_string()),
             });
         }
 
@@ -244,6 +264,16 @@ impl ServerHandler for ZhiServer {
 
                 // Use async version that returns immediately
                 InteractionTool::prompt_start(zhi_request).await
+            }
+            "prompt_sync" => {
+                let arguments_value = request.arguments
+                    .map(serde_json::Value::Object)
+                    .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
+
+                let zhi_request: ZhiRequest = serde_json::from_value(arguments_value)
+                    .map_err(|e| McpError::invalid_params(format!("Parameter parse error: {}", e), None))?;
+
+                InteractionTool::prompt_sync(zhi_request).await
             }
             "get_result" => {
                 let arguments_value = request.arguments
