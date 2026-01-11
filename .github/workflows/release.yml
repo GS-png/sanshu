@@ -335,13 +335,37 @@ jobs:
           VERSION_NUMBER="${{ needs.prepare.outputs.version }}"
           DATE=$(date +%Y-%m-%d)
 
+          export TAG_NAME VERSION_NUMBER DATE
+
           echo "📝 Updating README with version: $VERSION_NUMBER (tag: $TAG_NAME)"
 
           # 更新版本信息行
-          sed -i "s|> **📋 版本信息**：当前最新版本 v[0-9.]* | 上次更新：.*|> **📋 版本信息**：当前最新版本 ${VERSION_NUMBER} | 上次更新：${DATE}|g" README.md
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
 
-          # 更新下载链接中的版本号（包括URL路径和文件名）
-          sed -i "s|v[0-9.]\+/sanshu-cli-v[0-9.]*-|${TAG_NAME}/sanshu-cli-${VERSION_NUMBER}-|g" README.md
+          tag = os.environ.get("TAG_NAME", "")
+          date = os.environ.get("DATE", "")
+
+          p = Path("README.md")
+          text = p.read_text(encoding="utf-8")
+
+          text = re.sub(
+              r'^> \*\*📋 版本信息\*\*：当前最新版本 v[0-9.]+ \| 上次更新：.*$',
+              f'> **📋 版本信息**：当前最新版本 {tag} | 上次更新：{date}',
+              text,
+              flags=re.M,
+          )
+
+          text = re.sub(
+              r'releases/download/v[0-9.]+/sanshu-cli-v[0-9.]+-',
+              f'releases/download/{tag}/sanshu-cli-{tag}-',
+              text,
+          )
+
+          p.write_text(text, encoding="utf-8")
+          PY
 
           # 显示更改
           echo "=== README changes ==="
