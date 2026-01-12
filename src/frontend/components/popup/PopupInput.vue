@@ -118,6 +118,45 @@ const message = useMessage()
 
 let pasteTargetEl: HTMLTextAreaElement | null = null
 let pasteListener: ((event: ClipboardEvent) => void) | null = null
+let documentPasteListener: ((event: ClipboardEvent) => void) | null = null
+
+function guessFileExtensionFromMime(mime: string): string {
+  const normalized = mime.toLowerCase()
+  if (normalized === 'image/png')
+    return 'png'
+  if (normalized === 'image/jpeg')
+    return 'jpg'
+  if (normalized === 'image/webp')
+    return 'webp'
+  if (normalized === 'image/gif')
+    return 'gif'
+  if (normalized === 'image/bmp')
+    return 'bmp'
+  return 'png'
+}
+
+async function readImagesFromNavigatorClipboard(): Promise<File[]> {
+  if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function')
+    return []
+
+  const files: File[] = []
+  try {
+    const items = await navigator.clipboard.read()
+    for (const item of items) {
+      for (const type of item.types) {
+        if (!type.startsWith('image/'))
+          continue
+        const blob = await item.getType(type)
+        const ext = guessFileExtensionFromMime(type)
+        files.push(new File([blob], `pasted-${Date.now()}.${ext}`, { type }))
+      }
+    }
+  }
+  catch (error) {
+    console.debug('navigator.clipboard.read() 读取失败:', error)
+  }
+  return files
+}
 
 function getTextareaElement(): HTMLTextAreaElement | null {
   try {
@@ -129,6 +168,114 @@ function getTextareaElement(): HTMLTextAreaElement | null {
   }
 }
 
+async function handleImagePaste(event: ClipboardEvent) {
+  if (event.defaultPrevented)
+    return
+
+  const clipboardData = event.clipboardData
+  if (!clipboardData)
+    return
+
+  const imageFiles: File[] = []
+
+  if (clipboardData.files && clipboardData.files.length > 0) {
+    for (const file of Array.from(clipboardData.files)) {
+      if (file.type.startsWith('image/'))
+        imageFiles.push(file)
+    }
+  }
+
+  if (imageFiles.length === 0 && clipboardData.items) {
+    for (const item of Array.from(clipboardData.items)) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file)
+          imageFiles.push(file)
+      }
+    }
+  }
+
+  if (imageFiles.length > 0) {
+    event.preventDefault()
+    await handleImageFiles(imageFiles)
+    return
+  }
+
+  const html = clipboardData.getData('text/html')
+  if (html) {
+    const dataUrls: string[] = []
+    const imgSrcRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
+    let match: RegExpExecArray | null
+    while ((match = imgSrcRegex.exec(html)) !== null) {
+      const src = match[1]
+      if (src && src.startsWith('data:image/'))
+        dataUrls.push(src)
+    }
+
+    if (dataUrls.length > 0) {
+      event.preventDefault()
+      let addedCount = 0
+      for (const dataUrl of dataUrls) {
+        if (!uploadedImages.value.includes(dataUrl)) {
+          uploadedImages.value.push(dataUrl)
+          addedCount += 1
+        }
+      }
+      if (addedCount > 0) {
+        message.success(`已添加 ${addedCount} 张图片`)
+        emitUpdate()
+      }
+      return
+    }
+  }
+
+  const fallbackFiles = await readImagesFromNavigatorClipboard()
+  if (fallbackFiles.length > 0) {
+    event.preventDefault()
+    await handleImageFiles(fallbackFiles)
+  }
+}
+
+async function setupPasteListener() {
+  await nextTick()
+  const el = getTextareaElement()
+  if (!el) {
+    setTimeout(() => {
+      void setupPasteListener()
+    }, 120)
+    return
+  }
+  if (pasteTargetEl === el)
+    return
+
+  cleanupPasteListener()
+  pasteTargetEl = el
+  pasteListener = (event: ClipboardEvent) => {
+    void handleImagePaste(event)
+  }
+  pasteTargetEl.addEventListener('paste', pasteListener)
+}
+
+function setupDocumentPasteListener() {
+  if (documentPasteListener)
+    return
+  documentPasteListener = (event: ClipboardEvent) => {
+    if (event.defaultPrevented)
+      return
+    const textarea = getTextareaElement()
+    if (!textarea)
+      return
+
+    if (pasteTargetEl === textarea)
+      return
+
+    const active = document.activeElement
+    if (active === textarea)
+      void handleImagePaste(event)
+  }
+  document.addEventListener('paste', documentPasteListener, true)
+}
+
 function cleanupPasteListener() {
   if (pasteTargetEl && pasteListener) {
     pasteTargetEl.removeEventListener('paste', pasteListener)
@@ -137,18 +284,10 @@ function cleanupPasteListener() {
   pasteListener = null
 }
 
-async function setupPasteListener() {
-  await nextTick()
-  const el = getTextareaElement()
-  if (!el)
-    return
-  if (pasteTargetEl === el)
-    return
-
-  cleanupPasteListener()
-  pasteTargetEl = el
-  pasteListener = (event: ClipboardEvent) => handleImagePaste(event)
-  pasteTargetEl.addEventListener('paste', pasteListener)
+function cleanupDocumentPasteListener() {
+  if (documentPasteListener)
+    document.removeEventListener('paste', documentPasteListener, true)
+  documentPasteListener = null
 }
 
 // 计算属性
@@ -194,6 +333,10 @@ function emitUpdate() {
   })
 }
 
+watch(userInput, () => {
+  emitUpdate()
+})
+
 // 处理选项变化
 function handleOptionChange(option: string, checked: boolean) {
   if (checked) {
@@ -217,66 +360,6 @@ function handleOptionToggle(option: string) {
     selectedOptions.value.push(option)
   }
   emitUpdate()
-}
-
-// 移除了所有拖拽和上传组件相关的代码
-
-function handleImagePaste(event: ClipboardEvent) {
-  const clipboardData = event.clipboardData
-  if (!clipboardData)
-    return
-
-  const imageFiles: File[] = []
-
-  if (clipboardData.files && clipboardData.files.length > 0) {
-    for (const file of Array.from(clipboardData.files)) {
-      if (file.type.startsWith('image/'))
-        imageFiles.push(file)
-    }
-  }
-
-  if (imageFiles.length === 0 && clipboardData.items) {
-    for (const item of Array.from(clipboardData.items)) {
-      if (item.kind === 'file' && item.type.startsWith('image/')) {
-        const file = item.getAsFile()
-        if (file)
-          imageFiles.push(file)
-      }
-    }
-  }
-
-  if (imageFiles.length > 0) {
-    event.preventDefault()
-    handleImageFiles(imageFiles)
-    return
-  }
-
-  const html = clipboardData.getData('text/html')
-  if (html) {
-    const dataUrls: string[] = []
-    const imgSrcRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
-    let match: RegExpExecArray | null
-    while ((match = imgSrcRegex.exec(html)) !== null) {
-      const src = match[1]
-      if (src && src.startsWith('data:image/'))
-        dataUrls.push(src)
-    }
-
-    if (dataUrls.length > 0) {
-      event.preventDefault()
-      let addedCount = 0
-      for (const dataUrl of dataUrls) {
-        if (!uploadedImages.value.includes(dataUrl)) {
-          uploadedImages.value.push(dataUrl)
-          addedCount += 1
-        }
-      }
-      if (addedCount > 0) {
-        message.success(`已添加 ${addedCount} 张图片`)
-        emitUpdate()
-      }
-    }
-  }
 }
 
 async function handleImageFiles(files: FileList | File[]): Promise<void> {
@@ -365,6 +448,27 @@ async function loadCustomPrompts() {
   }
   catch (error) {
     console.error('PopupInput: 加载自定义prompt失败:', error)
+  }
+}
+
+async function initializeDragSort() {
+  await nextTick()
+  await nextTick()
+  if (!promptContainer.value)
+    return
+  start()
+}
+
+async function savePromptOrder() {
+  try {
+    const promptIds = sortablePrompts.value.map(p => p.id)
+    await invoke('update_custom_prompt_order', { promptIds })
+    message.success('排序已保存')
+  }
+  catch (error) {
+    console.error('保存排序失败:', error)
+    message.error('保存排序失败')
+    loadCustomPrompts()
   }
 }
 
@@ -494,93 +598,6 @@ function getConditionalDescription(prompt: CustomPrompt): string {
   return prompt.description || ''
 }
 
-// 移除拖拽排序初始化函数
-
-// 初始化拖拽排序功能
-async function initializeDragSort() {
-  console.log('PopupInput: initializeDragSort 被调用')
-
-  // 等待多个tick确保DOM完全渲染
-  await nextTick()
-  await nextTick()
-
-  // 使用更长的延迟
-  setTimeout(async () => {
-    console.log('PopupInput: 开始查找容器')
-
-    // 尝试多种方式查找容器
-    let targetContainer = promptContainer.value
-
-    if (!targetContainer) {
-      targetContainer = document.querySelector('[data-prompt-container]') as HTMLElement
-      console.log('PopupInput: querySelector结果:', targetContainer)
-    }
-
-    if (!targetContainer) {
-      // 尝试通过类名查找
-      const containers = document.querySelectorAll('.flex.flex-wrap')
-      console.log('PopupInput: 找到的flex容器数量:', containers.length)
-      for (let i = 0; i < containers.length; i++) {
-        const container = containers[i] as HTMLElement
-        if (container.querySelector('.sortable-item')) {
-          targetContainer = container
-          console.log('PopupInput: 通过sortable-item找到容器')
-          break
-        }
-      }
-    }
-
-    if (targetContainer) {
-      console.log('PopupInput: 找到目标容器:', targetContainer)
-      const dragHandles = targetContainer.querySelectorAll('.drag-handle')
-      console.log('PopupInput: 找到拖拽手柄数量:', dragHandles.length)
-
-      const sortableItems = targetContainer.querySelectorAll('.sortable-item')
-      console.log('PopupInput: 找到可排序项数量:', sortableItems.length)
-
-      // 更新容器引用
-      promptContainer.value = targetContainer
-
-      console.log('PopupInput: 调用start()函数')
-      start()
-      console.log('PopupInput: start()函数调用完成')
-    }
-    else {
-      console.log('PopupInput: 无法找到容器，DOM可能还没有渲染')
-      console.log('PopupInput: 当前页面所有带data-prompt-container的元素:', document.querySelectorAll('[data-prompt-container]'))
-      console.log('PopupInput: 当前页面所有.sortable-item元素:', document.querySelectorAll('.sortable-item'))
-    }
-  }, 500) // 增加延迟时间
-}
-
-// 保存prompt排序
-async function savePromptOrder() {
-  try {
-    console.log('savePromptOrder被调用')
-    console.log('当前sortablePrompts:', sortablePrompts.value.map(p => ({ id: p.id, name: p.name })))
-    const promptIds = sortablePrompts.value.map(p => p.id)
-    console.log('开始保存排序，prompt IDs:', promptIds)
-
-    const startTime = Date.now()
-    await invoke('update_custom_prompt_order', { promptIds })
-    const endTime = Date.now()
-
-    console.log(`排序已保存，耗时: ${endTime - startTime}ms`)
-    message.success('排序已保存')
-  }
-  catch (error) {
-    console.error('保存排序失败:', error)
-    message.error('保存排序失败')
-    // 重新加载以恢复原始顺序
-    loadCustomPrompts()
-  }
-}
-
-// 监听用户输入变化
-watch(userInput, () => {
-  emitUpdate()
-})
-
 // 移除拖拽相关的监听器
 
 // 事件监听器引用
@@ -629,6 +646,7 @@ onMounted(async () => {
   await loadCustomPrompts()
 
   await setupPasteListener()
+  setupDocumentPasteListener()
 
   // 监听自定义prompt更新事件
   unlistenCustomPromptUpdate = await listen('custom-prompt-updated', () => {
@@ -641,6 +659,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   cleanupPasteListener()
+  cleanupDocumentPasteListener()
   // 清理事件监听器
   if (unlistenCustomPromptUpdate) {
     unlistenCustomPromptUpdate()
