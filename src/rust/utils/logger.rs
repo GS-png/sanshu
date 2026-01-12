@@ -300,11 +300,32 @@ pub fn auto_init_logger() -> Result<(), Box<dyn std::error::Error>> {
 /// MCP 专用：强制使用 MCP 模式初始化日志系统
 /// 主要用于 MCP 服务器进程，避免日志输出到 stderr 干扰 MCP 通讯。
 pub fn init_mcp_logger() -> Result<(), Box<dyn std::error::Error>> {
-    // 获取日志文件路径（优先使用环境变量）
-    let log_file_path = env::var("MCP_LOG_FILE")
-        .ok()
-        .or_else(|| get_gui_log_path().map(|p| p.to_string_lossy().to_string()))
-        .or_else(|| Some("/tmp/sanshu_mcp.log".to_string()));
+    fn probe_writable_log_path(path: &PathBuf) -> Option<String> {
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .ok()
+            .map(|_| path.to_string_lossy().to_string())
+    }
+
+    let mut candidate_paths: Vec<PathBuf> = Vec::new();
+    if let Ok(p) = env::var("MCP_LOG_FILE") {
+        if !p.trim().is_empty() {
+            candidate_paths.push(PathBuf::from(p));
+        }
+    }
+    if let Some(p) = get_gui_log_path() {
+        candidate_paths.push(p);
+    }
+    candidate_paths.push(std::env::temp_dir().join("sanshu_mcp.log"));
+
+    let log_file_path = candidate_paths
+        .iter()
+        .find_map(probe_writable_log_path);
 
     let config = LogConfig {
         level: env::var("RUST_LOG")
