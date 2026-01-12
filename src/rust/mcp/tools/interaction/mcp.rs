@@ -585,17 +585,23 @@ impl InteractionTool {
                 let max_wait_display = max_wait_ms
                     .map(|v| v.to_string())
                     .unwrap_or_else(|| "infinite".to_string());
+                let ui_log_file = std::env::temp_dir().join(format!("sanshu_ui_mcp_{}.log", task_id));
+                let mcp_log_file = std::env::temp_dir().join("sanshu_mcp.log");
                 let waiting_msg = format!(
                     "Status: WAITING - User has not submitted yet\n\
                     Task ID: {}\n\n\
                     Long-poll waited: {}ms (max {})\n\n\
+                    UI log: {}\n\
+                    MCP log: {}\n\n\
                     The user is still working on their response.\n\
                     Ask the user in chat: \"Have you finished your input?\"\n\
                     DO NOT call prompt again while waiting.\n\
                     DO NOT call get_result again until the user confirms.",
                     task_id,
                     waited_ms,
-                    max_wait_display
+                    max_wait_display,
+                    ui_log_file.display(),
+                    mcp_log_file.display()
                 );
                 Ok(CallToolResult {
                     content: vec![Content::text(waiting_msg)],
