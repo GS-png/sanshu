@@ -25,7 +25,8 @@ pub fn create_tauri_popup(request: &PopupRequest) -> Result<String> {
     let output = Command::new(&command_path)
         .arg("--mcp-request")
         .arg(temp_file.to_string_lossy().to_string())
-        .output()?;
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to start UI process ({}): {}", command_path, e))?;
 
     // Cleanup temp file
     let _ = fs::remove_file(&temp_file);
@@ -39,20 +40,27 @@ pub fn create_tauri_popup(request: &PopupRequest) -> Result<String> {
             Ok(response.to_string())
         }
     } else {
-        let error = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!("UI process failed: {}", error);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        anyhow::bail!(
+            "UI process failed ({}). Exit: {}\n--- stderr ---\n{}\n--- stdout ---\n{}",
+            command_path,
+            output.status,
+            stderr.trim(),
+            stdout.trim()
+        );
     }
 }
 
 fn ui_candidate_names() -> &'static [&'static str] {
     #[cfg(windows)]
     {
-        &["sanshu-ui.exe", "sanshu-ui"]
+        &["sanshu-ui.exe", "sanshu-ui", "等一下.exe", "等一下"]
     }
 
     #[cfg(not(windows))]
     {
-        &["sanshu-ui"]
+        &["sanshu-ui", "等一下"]
     }
 }
 
@@ -152,10 +160,13 @@ pub fn find_ui_command() -> Result<String> {
 
     // 3. Return detailed error
     anyhow::bail!(
-        "UI command not found. Please ensure:\n\
-         1. Project is built: cargo build --release\n\
-         2. Or globally installed: ./install.sh\n\
-         3. Or sanshu-ui is in the same directory"
+        "UI command not found. Tried names: {:?}\n\
+         You can explicitly set UI path via env: SANSHU_UI_PATH or MCP_UI_PATH\n\
+         Please ensure either:\n\
+         1. UI is installed / in PATH (e.g. sanshu-ui)\n\
+         2. Or UI exe is in the same directory as sanshu-mcp\n\
+         3. Or set SANSHU_UI_PATH/MCP_UI_PATH to full path of the UI executable",
+        ui_candidate_names()
     )
 }
 
