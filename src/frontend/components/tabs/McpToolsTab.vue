@@ -4,8 +4,8 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useMcpToolsReactive } from '../../composables/useMcpTools'
 
 // 异步加载配置组件
-const SouConfig = defineAsyncComponent(() => import('../tools/SouConfig.vue'))
-const Context7Config = defineAsyncComponent(() => import('../tools/Context7Config.vue'))
+const IndexConfig = defineAsyncComponent(() => import('../tools/IndexConfig.vue'))
+const DocsConfig = defineAsyncComponent(() => import('../tools/DocsConfig.vue'))
 
 // 全局 MCP 工具状态
 const {
@@ -74,7 +74,7 @@ onMounted(async () => {
           <template #icon>
             <div class="i-carbon-connection-signal text-lg" />
           </template>
-          MCP工具配置已更改，请在您的MCP客户端中重新连接三术服务以使更改生效。
+          MCP tool configuration changed, please reconnect the service in your MCP client.
         </n-alert>
       </transition>
 
@@ -209,8 +209,8 @@ onMounted(async () => {
       transform-origin="center"
     >
       <div class="min-h-[400px]">
-        <SouConfig v-if="currentToolId === 'sou'" :active="showToolConfigModal" />
-        <Context7Config v-else-if="currentToolId === 'context7'" :active="showToolConfigModal" />
+        <IndexConfig v-if="currentToolId === 'index'" :active="showToolConfigModal" />
+        <DocsConfig v-else-if="currentToolId === 'docs'" :active="showToolConfigModal" />
         <div v-else class="empty-config">
           <div class="i-carbon-settings text-5xl mb-3 opacity-20" />
           <div class="text-sm opacity-60">

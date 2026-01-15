@@ -14,14 +14,17 @@ interface Props {
   submitting?: boolean
 }
 
+interface CachedIngredientItem {
+  spiceId: string
+  previewUrl: string
+}
+
 interface Emits {
   update: [data: {
-    userInput: string
-    selectedOptions: string[]
-    draggedImages: string[]
+    note: string
+    toppings: string[]
+    spiceIds: string[]
   }]
-  imageAdd: [image: string]
-  imageRemove: [index: number]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,9 +35,9 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 // 响应式数据
-const userInput = ref('')
-const selectedOptions = ref<string[]>([])
-const uploadedImages = ref<string[]>([])
+const note = ref('')
+const toppings = ref<string[]>([])
+const ingredients = ref<CachedIngredientItem[]>([])
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 // 自定义prompt相关状态
@@ -135,7 +138,34 @@ function guessFileExtensionFromMime(mime: string): string {
   return 'png'
 }
 
-async function readImagesFromNavigatorClipboard(): Promise<File[]> {
+function looksLikeImageFilePathList(text: string): boolean {
+  const rawLines = text
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(Boolean)
+  if (rawLines.length === 0)
+    return false
+
+  const lines = [...rawLines]
+  if (lines[0] === 'copy' || lines[0] === 'cut')
+    lines.shift()
+
+  if (lines.length === 0)
+    return false
+
+  const imageExt = /(\.png|\.jpe?g|\.webp|\.gif|\.bmp|\.tiff?)(\?.*)?$/i
+  return lines.some((line) => {
+    if (line.startsWith('#'))
+      return false
+    if (line.startsWith('file://'))
+      return imageExt.test(line)
+    if (line.startsWith('/') || /^[a-zA-Z]:[\\/]/.test(line))
+      return imageExt.test(line)
+    return false
+  })
+}
+
+async function readIngredientsFromNavigatorClipboard(): Promise<File[]> {
   if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function')
     return []
 
@@ -158,6 +188,44 @@ async function readImagesFromNavigatorClipboard(): Promise<File[]> {
   return files
 }
 
+async function addIngredientsFromRustClipboard(silent = true): Promise<number> {
+  try {
+    const blocks = await invoke('read_clipboard_ingredients_cached') as unknown as any[]
+    if (!Array.isArray(blocks) || blocks.length === 0)
+      return 0
+
+    let addedCount = 0
+    for (const block of blocks) {
+      const spiceId = block?.spice_id as string | undefined
+      const bytes = block?.bytes as number[] | Uint8Array | undefined
+      const dishType = block?.dish_type as string | undefined
+
+      if (!spiceId || !bytes || !dishType)
+        continue
+
+      if (ingredients.value.some(b => b.spiceId === spiceId))
+        continue
+
+      const blob = new Blob([new Uint8Array(bytes as any)], { type: dishType })
+      const previewUrl = URL.createObjectURL(blob)
+      ingredients.value.push({ spiceId, previewUrl })
+      addedCount += 1
+    }
+
+    if (addedCount > 0) {
+      if (!silent)
+        message.success(`已添加 ${addedCount} 个食材`)
+      emitUpdate()
+    }
+    return addedCount
+  }
+  catch (error) {
+    if (!silent)
+      message.error(`读取剪贴板食材失败: ${(error as any)?.message || error}`)
+    return 0
+  }
+}
+
 function getTextareaElement(): HTMLTextAreaElement | null {
   try {
     const inputElement = (textareaRef.value as any)?.$el?.querySelector('textarea') || (textareaRef.value as any)?.inputElRef
@@ -168,7 +236,7 @@ function getTextareaElement(): HTMLTextAreaElement | null {
   }
 }
 
-async function handleImagePaste(event: ClipboardEvent) {
+async function handleIngredientPaste(event: ClipboardEvent) {
   if (event.defaultPrevented)
     return
 
@@ -176,28 +244,28 @@ async function handleImagePaste(event: ClipboardEvent) {
   if (!clipboardData)
     return
 
-  const imageFiles: File[] = []
+  const ingredientFiles: File[] = []
 
   if (clipboardData.files && clipboardData.files.length > 0) {
     for (const file of Array.from(clipboardData.files)) {
       if (file.type.startsWith('image/'))
-        imageFiles.push(file)
+        ingredientFiles.push(file)
     }
   }
 
-  if (imageFiles.length === 0 && clipboardData.items) {
+  if (ingredientFiles.length === 0 && clipboardData.items) {
     for (const item of Array.from(clipboardData.items)) {
       if (item.kind === 'file' && item.type.startsWith('image/')) {
         const file = item.getAsFile()
         if (file)
-          imageFiles.push(file)
+          ingredientFiles.push(file)
       }
     }
   }
 
-  if (imageFiles.length > 0) {
+  if (ingredientFiles.length > 0) {
     event.preventDefault()
-    await handleImageFiles(imageFiles)
+    await handleIngredientFiles(ingredientFiles)
     return
   }
 
@@ -216,24 +284,55 @@ async function handleImagePaste(event: ClipboardEvent) {
       event.preventDefault()
       let addedCount = 0
       for (const dataUrl of dataUrls) {
-        if (!uploadedImages.value.includes(dataUrl)) {
-          uploadedImages.value.push(dataUrl)
+        try {
+          const blob = await (await fetch(dataUrl)).blob()
+          const dishType = blob.type || 'image/png'
+          const bytes = new Uint8Array(await blob.arrayBuffer())
+          const spiceId = await invoke('stash_ingredient_bytes_cmd', {
+            bytes: Array.from(bytes),
+            dish_type: dishType,
+            tag: `pasted-${Date.now()}.${guessFileExtensionFromMime(dishType)}`,
+          }) as unknown as string
+
+          if (!spiceId)
+            continue
+          if (ingredients.value.some(b => b.spiceId === spiceId))
+            continue
+
+          const previewUrl = URL.createObjectURL(blob)
+          ingredients.value.push({ spiceId, previewUrl })
           addedCount += 1
+        }
+        catch (error) {
+          console.debug('HTML 图片粘贴处理失败:', error)
         }
       }
       if (addedCount > 0) {
-        message.success(`已添加 ${addedCount} 张图片`)
+        message.success(`已添加 ${addedCount} 个食材`)
         emitUpdate()
       }
       return
     }
   }
 
-  const fallbackFiles = await readImagesFromNavigatorClipboard()
+  const plainText = clipboardData.getData('text/plain')
+  if (typeof plainText === 'string' && plainText.length > 0) {
+    if (looksLikeImageFilePathList(plainText)) {
+      event.preventDefault()
+      await addIngredientsFromRustClipboard(false)
+      return
+    }
+    return
+  }
+
+  const fallbackFiles = await readIngredientsFromNavigatorClipboard()
   if (fallbackFiles.length > 0) {
     event.preventDefault()
-    await handleImageFiles(fallbackFiles)
+    await handleIngredientFiles(fallbackFiles)
+    return
   }
+
+  await addIngredientsFromRustClipboard(false)
 }
 
 async function setupPasteListener() {
@@ -251,7 +350,7 @@ async function setupPasteListener() {
   cleanupPasteListener()
   pasteTargetEl = el
   pasteListener = (event: ClipboardEvent) => {
-    void handleImagePaste(event)
+    void handleIngredientPaste(event)
   }
   pasteTargetEl.addEventListener('paste', pasteListener)
 }
@@ -271,7 +370,7 @@ function setupDocumentPasteListener() {
 
     const active = document.activeElement
     if (active === textarea)
-      void handleImagePaste(event)
+      void handleIngredientPaste(event)
   }
   document.addEventListener('paste', documentPasteListener, true)
 }
@@ -291,24 +390,24 @@ function cleanupDocumentPasteListener() {
 }
 
 // 计算属性
-const hasOptions = computed(() => (props.request?.predefined_options?.length ?? 0) > 0)
+const hasOptions = computed(() => (props.request?.menu?.length ?? 0) > 0)
 const canSubmit = computed(() => {
-  const hasOptionsSelected = selectedOptions.value.length > 0
-  const hasInputText = userInput.value.trim().length > 0
-  const hasImages = uploadedImages.value.length > 0
+  const hasOptionsSelected = toppings.value.length > 0
+  const hasInputText = note.value.trim().length > 0
+  const hasBlocks = ingredients.value.length > 0
 
   if (hasOptions.value) {
-    return hasOptionsSelected || hasInputText || hasImages
+    return hasOptionsSelected || hasInputText || hasBlocks
   }
-  return hasInputText || hasImages
+  return hasInputText || hasBlocks
 })
 
 // 工具栏状态文本
 const statusText = computed(() => {
   // 检查是否有任何输入内容
-  const hasInput = selectedOptions.value.length > 0
-    || uploadedImages.value.length > 0
-    || userInput.value.trim().length > 0
+  const hasInput = toppings.value.length > 0
+    || ingredients.value.length > 0
+    || note.value.trim().length > 0
 
   // 如果有任何输入内容，返回空字符串让 PopupActions 显示快捷键
   if (hasInput) {
@@ -324,46 +423,46 @@ function emitUpdate() {
   const conditionalContent = generateConditionalContent()
 
   // 将条件性内容追加到用户输入
-  const finalUserInput = userInput.value + conditionalContent
+  const finalNote = note.value + conditionalContent
 
   emit('update', {
-    userInput: finalUserInput,
-    selectedOptions: selectedOptions.value,
-    draggedImages: uploadedImages.value,
+    note: finalNote,
+    toppings: toppings.value,
+    spiceIds: ingredients.value.map(b => b.spiceId),
   })
 }
 
-watch(userInput, () => {
+watch(note, () => {
   emitUpdate()
 })
 
 // 处理选项变化
 function handleOptionChange(option: string, checked: boolean) {
   if (checked) {
-    selectedOptions.value.push(option)
+    toppings.value.push(option)
   }
   else {
-    const idx = selectedOptions.value.indexOf(option)
+    const idx = toppings.value.indexOf(option)
     if (idx > -1)
-      selectedOptions.value.splice(idx, 1)
+      toppings.value.splice(idx, 1)
   }
   emitUpdate()
 }
 
 // 处理选项切换（整行点击）
 function handleOptionToggle(option: string) {
-  const idx = selectedOptions.value.indexOf(option)
+  const idx = toppings.value.indexOf(option)
   if (idx > -1) {
-    selectedOptions.value.splice(idx, 1)
+    toppings.value.splice(idx, 1)
   }
   else {
-    selectedOptions.value.push(option)
+    toppings.value.push(option)
   }
   emitUpdate()
 }
 
-async function handleImageFiles(files: FileList | File[]): Promise<void> {
-  console.log('=== 处理图片文件 ===')
+async function handleIngredientFiles(files: FileList | File[]): Promise<void> {
+  console.log('=== 处理食材文件 ===')
   console.log('文件数量:', files.length)
 
   for (const file of files) {
@@ -371,52 +470,50 @@ async function handleImageFiles(files: FileList | File[]): Promise<void> {
 
     if (file.type.startsWith('image/')) {
       try {
-        console.log('开始转换为 Base64...')
-        const base64 = await fileToBase64(file)
-        console.log('Base64转换成功，长度:', base64.length)
+        const bytes = new Uint8Array(await file.arrayBuffer())
+        const spiceId = await invoke('stash_ingredient_bytes_cmd', {
+          bytes: Array.from(bytes),
+          dish_type: file.type,
+          tag: file.name,
+        }) as unknown as string
 
-        // 检查是否已存在相同图片，避免重复添加
-        if (!uploadedImages.value.includes(base64)) {
-          uploadedImages.value.push(base64)
-          console.log('图片已添加到数组，当前数量:', uploadedImages.value.length)
-          message.success(`图片 ${file.name} 已添加`)
-          emitUpdate()
+        if (!spiceId)
+          continue
+
+        if (ingredients.value.some(b => b.spiceId === spiceId)) {
+          message.warning(`食材 ${file.name} 已存在`)
+          continue
         }
-        else {
-          console.log('图片已存在，跳过:', file.name)
-          message.warning(`图片 ${file.name} 已存在`)
-        }
+
+        const previewUrl = URL.createObjectURL(file)
+        ingredients.value.push({ spiceId, previewUrl })
+        message.success(`食材 ${file.name} 已添加`)
+        emitUpdate()
       }
       catch (error) {
-        console.error('图片处理失败:', error)
-        message.error(`图片 ${file.name} 处理失败`)
+        console.error('食材处理失败:', error)
+        message.error(`食材 ${file.name} 处理失败`)
         throw error
       }
     }
     else {
-      console.log('跳过非图片文件:', file.type)
+      console.log('跳过非食材文件:', file.type)
     }
   }
 
-  console.log('=== 图片文件处理完成 ===')
+  console.log('=== 食材文件处理完成 ===')
 }
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-function removeImage(index: number) {
-  uploadedImages.value.splice(index, 1)
-  emit('imageRemove', index)
+function removeIngredient(index: number) {
+  const removed = ingredients.value.splice(index, 1)[0]
+  if (removed?.previewUrl)
+    URL.revokeObjectURL(removed.previewUrl)
+  if (removed?.spiceId)
+    void invoke('discard_spice_cmd', { spice_id: removed.spiceId })
   emitUpdate()
 }
 
-// 移除自定义图片预览功能，改用 Naive UI 的内置预览
+// 移除自定义食材预览功能，改用 Naive UI 的内置预览
 
 // 加载自定义prompt配置
 async function loadCustomPrompts() {
@@ -476,12 +573,12 @@ async function savePromptOrder() {
 function handlePromptClick(prompt: CustomPrompt) {
   // 如果prompt内容为空或只有空格，直接清空输入框
   if (!prompt.content || prompt.content.trim() === '') {
-    userInput.value = ''
+    note.value = ''
     emitUpdate()
     return
   }
 
-  if (userInput.value.trim()) {
+  if (note.value.trim()) {
     // 如果输入框有内容，显示插入选择对话框
     pendingPromptContent.value = prompt.content
     showInsertDialog.value = true
@@ -494,7 +591,7 @@ function handlePromptClick(prompt: CustomPrompt) {
 
 // 处理引用消息内容
 function handleQuoteMessage(messageContent: string) {
-  if (userInput.value.trim()) {
+  if (note.value.trim()) {
     // 输入框有内容，显示插入选择对话框
     pendingPromptContent.value = messageContent
     showInsertDialog.value = true
@@ -509,10 +606,10 @@ function handleQuoteMessage(messageContent: string) {
 // 插入prompt内容
 function insertPromptContent(content: string, mode: 'replace' | 'append' = 'replace') {
   if (mode === 'replace') {
-    userInput.value = content
+    note.value = content
   }
   else {
-    userInput.value = userInput.value.trim() + (userInput.value.trim() ? '\n\n' : '') + content
+    note.value = note.value.trim() + (note.value.trim() ? '\n\n' : '') + content
   }
 
   // 聚焦到输入框
@@ -669,34 +766,47 @@ onUnmounted(() => {
     unlistenWindowMove()
   }
 
+  for (const b of ingredients.value) {
+    if (b.previewUrl)
+      URL.revokeObjectURL(b.previewUrl)
+    if (b.spiceId)
+      void invoke('discard_spice_cmd', { spice_id: b.spiceId })
+  }
+
   // 停止拖拽功能
   stop()
 })
 
 // 重置数据
 function reset() {
-  userInput.value = ''
-  selectedOptions.value = []
-  uploadedImages.value = []
+  note.value = ''
+  toppings.value = []
+  for (const b of ingredients.value) {
+    if (b.previewUrl)
+      URL.revokeObjectURL(b.previewUrl)
+    if (b.spiceId)
+      void invoke('discard_spice_cmd', { spice_id: b.spiceId })
+  }
+  ingredients.value = []
   emitUpdate()
 }
 
 // 更新数据（用于外部同步）
-function updateData(data: { userInput?: string, selectedOptions?: string[], draggedImages?: string[] }) {
-  if (data.userInput !== undefined) {
-    userInput.value = data.userInput
+function updateData(data: { note?: string, toppings?: string[], spiceIds?: string[] }) {
+  if (data.note !== undefined) {
+    note.value = data.note
   }
-  if (data.selectedOptions !== undefined) {
-    selectedOptions.value = data.selectedOptions
+  if (data.toppings !== undefined) {
+    toppings.value = data.toppings
   }
-  if (data.draggedImages !== undefined) {
-    uploadedImages.value = data.draggedImages
+  if (data.spiceIds !== undefined) {
+    // 父组件现在只会传 spiceId 列表；这里不做反向同步（预览只能由 PopupInput 自己维护）
   }
 
   emitUpdate()
 }
 
-// 移除了文件选择和测试图片功能
+// 移除了文件选择和测试食材功能
 
 // 暴露方法给父组件
 defineExpose({
@@ -717,14 +827,14 @@ defineExpose({
       </h4>
       <n-space vertical size="small">
         <div
-          v-for="(option, index) in request!.predefined_options"
+          v-for="(option, index) in request!.menu"
           :key="`option-${index}`"
           class="rounded-lg p-3 border border-gray-600 bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
           @click="handleOptionToggle(option)"
         >
           <n-checkbox
             :value="option"
-            :checked="selectedOptions.includes(option)"
+            :checked="toppings.includes(option)"
             :disabled="submitting"
             size="medium"
             @update:checked="(checked: boolean) => handleOptionChange(option, checked)"
@@ -736,23 +846,23 @@ defineExpose({
       </n-space>
     </div>
 
-    <!-- 图片预览区域 -->
-    <div v-if="!loading && uploadedImages.length > 0" class="space-y-3">
+    <!-- 食材预览区域 -->
+    <div v-if="!loading && ingredients.length > 0" class="space-y-3">
       <h4 class="text-sm font-medium text-white">
-        已添加的图片 ({{ uploadedImages.length }})
+        已添加的食材 ({{ ingredients.length }})
       </h4>
 
-      <!-- 使用 Naive UI 的图片组件，支持预览和放大 -->
+      <!-- 使用 Naive UI 的食材组件，支持预览和放大 -->
       <n-image-group>
         <div class="flex flex-wrap gap-3">
           <div
-            v-for="(image, index) in uploadedImages"
-            :key="`image-${index}`"
+            v-for="(block, index) in ingredients"
+            :key="`ingredient-${index}`"
             class="relative"
           >
             <!-- 使用 n-image 组件，启用预览功能 -->
             <n-image
-              :src="image"
+              :src="block.previewUrl"
               width="100"
               height="100"
               object-fit="cover"
@@ -765,7 +875,7 @@ defineExpose({
               size="tiny"
               type="error"
               circle
-              @click="removeImage(index)"
+              @click="removeIngredient(index)"
             >
               <template #icon>
                 <div class="i-carbon-close w-3 h-3" />
@@ -849,20 +959,20 @@ defineExpose({
         </div>
       </div>
 
-      <!-- 图片提示区域 -->
-      <div v-if="uploadedImages.length === 0" class="text-center">
+      <!-- 食材提示区域 -->
+      <div v-if="ingredients.length === 0" class="text-center">
         <div class="text-xs text-on-surface-secondary">
-          💡 提示：可以在输入框中粘贴图片 ({{ pasteShortcut }})
+          💡 提示：可以在输入框中粘贴食材 ({{ pasteShortcut }})
         </div>
       </div>
 
       <!-- 文本输入框 -->
       <n-input
         ref="textareaRef"
-        v-model:value="userInput"
+        v-model:value="note"
         type="textarea"
         size="small"
-        :placeholder="hasOptions ? `您可以在这里添加补充说明... (支持粘贴图片 ${pasteShortcut})` : `请输入您的回复... (支持粘贴图片 ${pasteShortcut})`"
+        :placeholder="hasOptions ? `您可以在这里添加补充说明... (支持粘贴食材 ${pasteShortcut})` : `请输入您的回复... (支持粘贴食材 ${pasteShortcut})`"
         :disabled="submitting"
         :autosize="{ minRows: 3, maxRows: 6 }"
         data-guide="popup-input"

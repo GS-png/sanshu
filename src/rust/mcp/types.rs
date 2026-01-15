@@ -2,42 +2,29 @@ use chrono;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ZhiRequest {
+pub struct CacheRequest {
     #[schemars(description = "The content to display")]
     pub message: String,
-    
-    // Support both old name (predefined_options) and new name (choices) for compatibility
+
     #[schemars(description = "Optional list of response templates")]
-    #[serde(default, alias = "predefined_options")]
+    #[serde(default)]
     pub choices: Vec<String>,
-    
+
     #[schemars(description = "Enable rich text formatting, defaults to true")]
-    #[serde(default = "default_is_markdown", alias = "is_markdown")]
+    #[serde(default = "default_chalkboard")]
     pub format: bool,
-    
+
     #[schemars(description = "Project root path for context")]
     #[serde(default)]
     pub project_root_path: Option<String>,
 }
 
-impl ZhiRequest {
-    /// Get choices (for backward compatibility with predefined_options)
-    pub fn get_choices(&self) -> &Vec<String> {
-        &self.choices
-    }
-    
-    /// Get format setting (for backward compatibility with is_markdown)
-    pub fn get_format(&self) -> bool {
-        self.format
-    }
-}
-
-fn default_is_markdown() -> bool {
+fn default_chalkboard() -> bool {
     true
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct JiyiRequest {
+pub struct StoreRequest {
     #[schemars(description = "Operation type: store (add entry), recall (get project info)")]
     pub action: String,
     #[schemars(description = "Project path (required)")]
@@ -68,91 +55,75 @@ fn default_category() -> String {
 pub struct PopupRequest {
     pub id: String,
     pub message: String,
-    pub predefined_options: Option<Vec<String>>,
-    pub is_markdown: bool,
+    pub menu: Option<Vec<String>>,
+    pub chalkboard: bool,
     pub project_root_path: Option<String>,
 }
 
 /// Structured response data format
 #[derive(Debug, Deserialize)]
-pub struct McpResponse {
-    pub user_input: Option<String>,
-    pub selected_options: Vec<String>,
-    pub images: Vec<ImageAttachment>,
-    pub metadata: ResponseMetadata,
+pub struct DishResponse {
+    pub note: Option<String>,
+    pub toppings: Vec<String>,
+    #[serde(default)]
+    pub ingredients: Vec<IngredientAttachment>,
+    pub ticket: KitchenTicket,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ImageAttachment {
-    pub data: String,
-    pub media_type: String,
-    pub filename: Option<String>,
+pub struct IngredientAttachment {
+    pub sauce: String,
+    pub dish_type: String,
+    pub tag: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ResponseMetadata {
-    pub timestamp: Option<String>,
-    pub request_id: Option<String>,
-    pub source: Option<String>,
-}
-
-/// Legacy format compatibility
-#[derive(Debug, Deserialize)]
-pub struct McpResponseContent {
-    #[serde(rename = "type")]
-    pub content_type: String,
-    pub text: Option<String>,
-    pub source: Option<ImageSource>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ImageSource {
-    #[serde(rename = "type")]
-    pub source_type: String,
-    pub media_type: String,
-    pub data: String,
+pub struct KitchenTicket {
+    pub cooked_at: Option<String>,
+    pub ticket_id: Option<String>,
+    pub station: Option<String>,
 }
 
 /// Build MCP response
-pub fn build_mcp_response(
-    user_input: Option<String>,
-    selected_options: Vec<String>,
-    images: Vec<ImageAttachment>,
-    request_id: Option<String>,
-    source: &str,
+pub fn build_dish_response(
+    note: Option<String>,
+    toppings: Vec<String>,
+    ingredients: Vec<IngredientAttachment>,
+    ticket_id: Option<String>,
+    station: &str,
 ) -> serde_json::Value {
     serde_json::json!({
-        "user_input": user_input,
-        "selected_options": selected_options,
-        "images": images,
-        "metadata": {
-            "timestamp": chrono::Utc::now().to_rfc3339(),
-            "request_id": request_id,
-            "source": source
+        "note": note,
+        "toppings": toppings,
+        "ingredients": ingredients,
+        "ticket": {
+            "cooked_at": chrono::Utc::now().to_rfc3339(),
+            "ticket_id": ticket_id,
+            "station": station
         }
     })
 }
 
 /// Build send response
-pub fn build_send_response(
-    user_input: Option<String>,
-    selected_options: Vec<String>,
-    images: Vec<ImageAttachment>,
-    request_id: Option<String>,
-    source: &str,
+pub fn build_serve_response(
+    note: Option<String>,
+    toppings: Vec<String>,
+    ingredients: Vec<IngredientAttachment>,
+    ticket_id: Option<String>,
+    station: &str,
 ) -> String {
-    let response = build_mcp_response(user_input, selected_options, images, request_id, source);
+    let response = build_dish_response(note, toppings, ingredients, ticket_id, station);
     response.to_string()
 }
 
 /// Build continue response
-pub fn build_continue_response(request_id: Option<String>, source: &str) -> String {
+pub fn build_refill_response(ticket_id: Option<String>, station: &str) -> String {
     let continue_prompt = if let Ok(config) = crate::config::load_standalone_config() {
         config.reply_config.continue_prompt
     } else {
         "Please continue following best practices".to_string()
     };
 
-    let response = build_mcp_response(Some(continue_prompt), vec![], vec![], request_id, source);
+    let response = build_dish_response(Some(continue_prompt), vec![], vec![], ticket_id, station);
     response.to_string()
 }

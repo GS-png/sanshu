@@ -1,5 +1,5 @@
 // MCP server entry point
-use sanshu::{mcp::run_server, utils::init_mcp_logger, log_important};
+use devkit::{mcp::run_server, utils::init_mcp_logger, log_important};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

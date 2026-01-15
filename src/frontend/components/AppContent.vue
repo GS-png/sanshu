@@ -87,12 +87,12 @@ const {
 // 记录重新同步按钮的本地 loading 状态
 const resyncLoading = ref(false)
 
-// 是否启用 sou 代码搜索工具
-const souEnabled = computed(() => mcpTools.value.some(tool => tool.id === 'sou' && tool.enabled))
+// Check if index tool is enabled
+const indexEnabled = computed(() => mcpTools.value.some(tool => tool.id === 'index' && tool.enabled))
 
 // Header 中是否需要展示 MCP 索引状态指示器
 const showMcpIndexStatus = computed(() => {
-  return souEnabled.value
+  return indexEnabled.value
     && !!props.mcpRequest?.project_root_path
     && !!currentProjectStatus.value
 })
@@ -149,7 +149,7 @@ onMounted(() => {
   // 添加全局键盘事件监听器
   document.addEventListener('keydown', handleGlobalKeydown)
 
-  // 加载 MCP 工具配置（用于检测 sou 是否启用）
+  // 加载 MCP 工具配置（用于检测 index 是否启用）
   loadMcpTools()
 })
 

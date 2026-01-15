@@ -71,7 +71,7 @@ async function toggleTelegramEnabled() {
 
 async function saveAndTest() {
   if (!telegramConfig.value.bot_token.trim()) {
-    message.warning('请输入Bot Token')
+    message.warning('请输入 Bot 密钥')
     return
   }
 
@@ -106,7 +106,7 @@ async function saveAndTest() {
 // 自动获取Chat ID
 async function autoGetChatId() {
   if (!telegramConfig.value.bot_token.trim()) {
-    message.warning('请先输入Bot Token')
+    message.warning('请先输入 Bot 密钥')
     return
   }
 
@@ -140,7 +140,7 @@ async function autoGetChatId() {
     cleanupFunctions.push(unlistenDetected)
 
     const unlistenTimeout = await listen('chat-id-detection-timeout', () => {
-      message.warning('检测超时，请确保Bot Token正确并向Bot发送消息')
+      message.warning('检测超时，请确保 Bot 密钥正确并向机器人发送消息')
       isDetectingChatId.value = false
 
       // 清理所有监听器
@@ -206,21 +206,21 @@ onMounted(() => {
     <!-- 配置项区域 - 条件显示 -->
     <n-collapse-transition :show="telegramConfig.enabled">
       <n-space vertical size="large">
-        <!-- Bot Token设置 -->
+        <!-- Bot 密钥设置 -->
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
           <div class="flex items-start">
             <div class="w-1.5 h-1.5 bg-info rounded-full mr-3 mt-2 flex-shrink-0" />
             <div class="flex-1">
               <div class="text-sm font-medium mb-3 leading-relaxed">
-                Bot Token
+                Bot 密钥
               </div>
               <div class="text-xs opacity-60 mb-3">
-                从 @BotFather 获取的Bot Token，用于验证Bot身份。不知道如何获取？点击下方"设置指引"查看完整教程
+                从 @BotFather 获取的 Bot 密钥，用于验证机器人身份。不知道如何获取？点击下方"设置指引"查看完整教程
               </div>
               <n-space vertical size="small">
                 <n-input
                   v-model:value="telegramConfig.bot_token" type="text"
-                  placeholder="请输入Bot Token (例如: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz)" size="small"
+                  placeholder="请输入 Bot 密钥 (例如: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz)" size="small"
                   :disabled="isTesting" @blur="saveTelegramConfig"
                 />
                 <n-button size="small" type="info" @click="startSetupWizard">
@@ -336,7 +336,7 @@ onMounted(() => {
   <n-modal v-model:show="showSetupWizard" preset="card" title="Telegram Bot 设置向导" style="width: 600px; margin: 0 20px;">
     <n-steps :current="setupStep" size="small">
       <n-step title="创建Bot" />
-      <n-step title="获取Token" />
+      <n-step title="获取密钥" />
       <n-step title="获取Chat ID" />
       <n-step title="完成设置" />
     </n-steps>
@@ -351,7 +351,7 @@ onMounted(() => {
           <p>1. 在Telegram中搜索并打开 <code class="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-medium">@BotFather</code></p>
           <p>2. 发送命令 <code class="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded font-medium">/newbot</code></p>
           <p>3. 按提示输入Bot的名称和用户名</p>
-          <p>4. 创建成功后，BotFather会发送Bot Token给你</p>
+          <p>4. 创建成功后，BotFather会发送 Bot 密钥给你</p>
         </div>
         <n-space justify="end">
           <n-button @click="closeSetupWizard">
@@ -363,13 +363,13 @@ onMounted(() => {
         </n-space>
       </div>
 
-      <!-- 步骤2: 获取Token -->
+      <!-- 步骤2: 获取密钥 -->
       <div v-if="setupStep === 2" class="space-y-4">
         <h3 class="text-lg font-medium">
-          第二步：输入Bot Token
+          第二步：输入 Bot 密钥
         </h3>
         <div class="space-y-3 text-sm">
-          <p>将BotFather发送给你的Token粘贴到下面：</p>
+          <p>将 BotFather 发送给你的密钥粘贴到下面：</p>
           <n-input
             v-model:value="telegramConfig.bot_token" type="text"
             placeholder="例如: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz" size="small"
@@ -413,7 +413,7 @@ onMounted(() => {
             <div class="text-sm space-y-2">
               <div class="p-2 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                 <code class="text-xs break-all text-gray-700 dark:text-gray-300">
-                  {{ telegramConfig.api_base_url }}{{ telegramConfig.bot_token || 'YOUR_BOT_TOKEN' }}/getUpdates
+                  {{ telegramConfig.api_base_url }}{{ telegramConfig.bot_token || 'YOUR_BOT_KEY' }}/getUpdates
                 </code>
               </div>
             </div>
@@ -446,7 +446,7 @@ onMounted(() => {
             <n-card size="small" class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
               <div class="space-y-1 text-sm">
                 <div class="text-gray-700 dark:text-gray-300">
-                  <span class="font-medium">Bot Token:</span>
+                  <span class="font-medium">Bot 密钥:</span>
                   <code class="ml-2 text-gray-600 dark:text-gray-400">{{ telegramConfig.bot_token.substring(0, 20) }}...</code>
                 </div>
                 <div class="text-gray-700 dark:text-gray-300">

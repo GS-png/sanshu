@@ -1,16 +1,14 @@
 <div align="center">
 
-# 三术 / sanshu
+# DevKit
 
-[![CI](https://img.shields.io/github/actions/workflow/status/yuaotian/sanshu/CI.yml?branch=main&style=flat-square&logo=github)](https://github.com/yuaotian/sanshu/actions)
-[![License](https://img.shields.io/github/license/yuaotian/sanshu?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/aspect-build/devkit/CI.yml?branch=main&style=flat-square&logo=github)](https://github.com/aspect-build/devkit/actions)
+[![License](https://img.shields.io/github/license/aspect-build/devkit?style=flat-square)](LICENSE)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org/)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square)](https://github.com/yuaotian/sanshu)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square)](https://github.com/aspect-build/devkit)
 [![MCP Protocol](https://img.shields.io/badge/protocol-MCP-green.svg?style=flat-square&logo=openai)](https://modelcontextprotocol.io/)
 
-> **道生一，一生二，二生三，三生万物**
-
-*智 · 记 · 搜 —— AI 辅助编程增强系统*
+*Development Toolkit for Enhanced AI Coding*
 
 [功能特性](#-核心功能) •
 [快速开始](#-安装与使用) •
@@ -36,10 +34,10 @@
 
 | 🖥️ 平台 | 📥 GitHub 直链 | 🌏 国内加速 | 📋 说明 |
 |:-------:|:-------------:|:-----------:|:------:|
-| **Windows x64** | [下载 .zip ⏬](https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-windows-x86_64.zip) | [wget.la ⏬](https://wget.la/https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-windows-x86_64.zip) | 64位 Windows 系统 |
-| **macOS ARM64** | [下载 .tar.gz ⏬](https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-macos-aarch64.tar.gz) | [wget.la ⏬](https://wget.la/https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-macos-aarch64.tar.gz) | Apple Silicon (M1/M2/M3) |
-| **macOS Intel** | [下载 .tar.gz ⏬](https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-macos-x86_64.tar.gz) | [wget.la ⏬](https://wget.la/https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-macos-x86_64.tar.gz) | Intel 芯片 Mac |
-| **Linux x64** | [下载 .tar.gz ⏬](https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-linux-x86_64.tar.gz) | [wget.la ⏬](https://wget.la/https://github.com/yuaotian/sanshu/releases/download/v0.26.8/sanshu-cli-v0.26.8-linux-x86_64.tar.gz) | 64位 Linux 系统 |
+| **Windows x64** | [下载 .zip ⏬](https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-windows-x86_64.zip) | [wget.la ⏬](https://wget.la/https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-windows-x86_64.zip) | 64位 Windows 系统 |
+| **macOS ARM64** | [下载 .tar.gz ⏬](https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-macos-aarch64.tar.gz) | [wget.la ⏬](https://wget.la/https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-macos-aarch64.tar.gz) | Apple Silicon (M1/M2/M3) |
+| **macOS Intel** | [下载 .tar.gz ⏬](https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-macos-x86_64.tar.gz) | [wget.la ⏬](https://wget.la/https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-macos-x86_64.tar.gz) | Intel 芯片 Mac |
+| **Linux x64** | [下载 .tar.gz ⏬](https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-linux-x86_64.tar.gz) | [wget.la ⏬](https://wget.la/https://github.com/aspect-build/devkit/releases/download/v0.26.8/devkit-cli-v0.26.8-linux-x86_64.tar.gz) | 64位 Linux 系统 |
 
 > **🎯 如何选择下载链接？**
 >
@@ -77,11 +75,11 @@
 
 ## 📖 简介
 
-**三术 (sanshu)** 是一个集成了 **智 (zhi)**、**记 (ji)**、**搜 (sou)** 三大核心能力的 AI 辅助编程增强系统。它通过 MCP (Model Context Protocol) 协议与 AI 助手深度协同，实现了从被动应答到主动协作的范式转变。
+**DevKit (devkit)** 是一个集成了 **Cache**、**Store**、**Index** 三大核心能力的 AI 辅助编程增强系统。它通过 MCP (Model Context Protocol) 协议与 AI 助手深度协同，实现了从被动应答到主动协作的范式转变。
 
 <div align="center">
-  <img src="screenshots/home.png" alt="三术主界面" width="800" />
-  <p><em>三术主界面 - 集成三大核心工具的统一工作台</em></p>
+  <img src="screenshots/home.png" alt="DevKit主界面" width="800" />
+  <p><em>DevKit主界面 - 集成三大核心工具的统一工作台</em></p>
 </div>
 
 ---
@@ -104,16 +102,16 @@
 
 ## 🌟 核心功能
 
-三术由三个相辅相成的核心工具组成，并集成了 Context7 文档查询能力：
+DevKit由三个相辅相成的核心工具组成，并集成了 docs 文档查询能力：
 
 | 工具 | 名称 | 理念 | 核心能力              |
 |:---:|:---:|:---:|:------------------|
-| 🧠 | **zhi (智)** | 审时度势，智在必行 | 交互式决策、多模态输入、状态可视化 |
-| 📚 | **ji (记)** | 博闻强记，温故知新 | 全局记忆、自动回忆、分类管理    |
-| 🔍 | **sou (搜)** | 搜神索隐，洞若观火 | 语义搜索、增量索引         |
-| 📖 | **context7** | 博采众长，与时俱进 | 框架文档查询、智能降级搜索     |
+| 🧠 | **cache** | 审时度势，智在必行 | 交互式决策、多模态输入、状态可视化 |
+| 📚 | **store** | 博闻强记，温故知新 | 全局记忆、自动回忆、分类管理    |
+| 🔍 | **index** | 搜神索隐，洞若观火 | 语义搜索、增量索引         |
+| 📖 | **docs** | 博采众长，与时俱进 | 框架文档查询、智能降级搜索     |
 
-### 🧠 zhi (智/审) - 智能代码审查与交互
+### 🧠 cache - 智能代码审查与交互
 
 > **"审时度势，智在必行"**
 
@@ -122,11 +120,11 @@
 - **状态可视化**：实时展示后端任务状态（如索引进度），让协作更加透明
 
 <div align="center">
-  <img src="screenshots/popup.png" alt="Zhi Popup Interaction" width="700" />
-  <p><em>Zhi 智能交互弹窗 - 确保AI决策透明化的强制交互界面</em></p>
+  <img src="screenshots/popup.png" alt="Cache Popup Interaction" width="700" />
+  <p><em>Cache 智能交互弹窗 - 确保AI决策透明化的强制交互界面</em></p>
 </div>
 
-### 📚 ji (记) - 记忆管理系统
+### 📚 store - 记忆管理系统
 
 > **"博闻强记，温故知新"**
 
@@ -134,7 +132,7 @@
 - **自动回忆**：每次对话开始时自动加载相关记忆，保持上下文连贯性
 - **分类管理**：支持 Rule (规则)、Preference (偏好)、Pattern (模式)、Context (上下文) 等多维度管理
 
-### 🔍 sou (搜) - 代码语义搜索引擎
+### 🔍 index - 代码语义搜索引擎
 
 > **"搜神索隐，洞若观火"**
 
@@ -142,7 +140,7 @@
 - **增量索引**：实时监听文件变更，自动维护最新索引
 - **智能等待**：在索引更新时自动平衡速度与完整性
 
-### 📖 context7 - 框架文档查询
+### 📖 docs - 框架文档查询
 
 > **"博采众长，与时俱进"**
 
@@ -175,7 +173,7 @@
 
 <div align="center">
   <img src="screenshots/mcp-tool.png" alt="MCP工具配置界面" width="700" />
-  <p><em>MCP工具配置界面 - Context7文档查询工具设置</em></p>
+  <p><em>MCP工具配置界面 - Docs 文档查询工具设置</em></p>
 </div>
 
 ---
@@ -204,12 +202,12 @@
 
 #### 1️⃣ 下载并放置可执行文件
 
-从 [Releases 页面](https://github.com/yuaotian/sanshu/releases) 下载对应平台的压缩包，解压后将可执行文件放置到以下推荐目录：
+从 [Releases 页面](https://github.com/aspect-build/devkit/releases) 下载对应平台的压缩包，解压后将可执行文件放置到以下推荐目录：
 
 | 平台 | 推荐安装路径 | 说明 |
 |------|-------------|------|
-| **Windows** | `C:\Program Files\sanshu\` | 需要管理员权限 |
-| **Windows** | `%LOCALAPPDATA%\sanshu\` | 无需管理员权限（推荐） |
+| **Windows** | `C:\Program Files\devkit\` | 需要管理员权限 |
+| **Windows** | `%LOCALAPPDATA%\devkit\` | 无需管理员权限（推荐） |
 | **Linux** | `~/.local/bin/` | 用户级安装（推荐） |
 | **Linux** | `/usr/local/bin/` | 系统级安装，需要 sudo |
 | **macOS** | `~/.local/bin/` | 用户级安装（推荐） |
@@ -227,7 +225,7 @@
 1. 按 `Win + R`，输入 `sysdm.cpl`，回车
 2. 点击「高级」选项卡 → 「环境变量」
 3. 在「用户变量」或「系统变量」中找到 `Path`，点击「编辑」
-4. 点击「新建」，添加可执行文件所在目录（如 `C:\Program Files\sanshu\`）
+4. 点击「新建」，添加可执行文件所在目录（如 `C:\Program Files\devkit\`）
 5. 点击「确定」保存，**重启终端**使配置生效
 
 **方法二：通过 PowerShell 命令**
@@ -235,11 +233,11 @@
 ```powershell
 # 添加到用户级 PATH（无需管理员权限）
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-[Environment]::SetEnvironmentVariable("Path", "$userPath;C:\Program Files\sanshu\", "User")
+[Environment]::SetEnvironmentVariable("Path", "$userPath;C:\Program Files\devkit\", "User")
 
 # 或添加到系统级 PATH（需要管理员权限）
 $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-[Environment]::SetEnvironmentVariable("Path", "$machinePath;C:\Program Files\sanshu\", "Machine")
+[Environment]::SetEnvironmentVariable("Path", "$machinePath;C:\Program Files\devkit\", "Machine")
 ```
 
 > ⚠️ 配置完成后需要**重启终端**或**重新登录**使配置生效。
@@ -289,38 +287,38 @@ source ~/.bash_profile
 macOS 用户也可以选择更便捷的 Homebrew 安装方式：
 
 ```bash
-# 1. 添加三术的 Tap 仓库
-brew tap yuaotian/tap
+# 1. 添加DevKit的 Tap 仓库
+brew tap aspect-build/tap
 
-# 2. 安装三术
-brew install sanshu
+# 2. 安装DevKit
+brew install devkit
 
 # 3. 验证安装（可选）
-sanshu-mcp --version
+devkit-mcp --version
 ```
 
 **Homebrew 优势**：
-- 🤖 **自动更新**：新版本发布后使用 `brew upgrade sanshu` 即可更新
+- 🤖 **自动更新**：新版本发布后使用 `brew upgrade devkit` 即可更新
 - 🔧 **依赖管理**：自动处理所有依赖，无需手动配置 PATH
 - 🛡️ **安全验证**：自动验证二进制文件的完整性
 
 **常用操作**：
 
 ```bash
-# 更新三术到最新版本
-brew upgrade sanshu
+# 更新DevKit到最新版本
+brew upgrade devkit
 
 # 查看已安装版本
-brew info sanshu
+brew info devkit
 
-# 卸载三术
-brew uninstall sanshu
+# 卸载DevKit
+brew uninstall devkit
 
 # 移除 Tap 仓库
-brew untap yuaotian/tap
+brew untap aspect-build/tap
 ```
 
-> **💡 提示**：Homebrew 安装无需手动配置环境变量，安装完成后即可直接使用 `sanshu-ui` / `sanshu-mcp` 命令。
+> **💡 提示**：Homebrew 安装无需手动配置环境变量，安装完成后即可直接使用 `devkit-ui` / `devkit-mcp` 命令。
 
 #### 3️⃣ 验证安装
 
@@ -328,7 +326,7 @@ brew untap yuaotian/tap
 
 ```bash
 # 验证 MCP 服务是否可用
-sanshu-mcp --version
+devkit-mcp --version
 ```
 
 如果正确显示版本号，说明环境变量配置成功。
@@ -337,13 +335,13 @@ sanshu-mcp --version
 
 > **环境变量配置是 MCP 客户端正常工作的前提条件。**
 >
-> - ✅ **已配置环境变量**：MCP 配置中可直接使用 `"command": "sanshu-mcp"`
+> - ✅ **已配置环境变量**：MCP 配置中可直接使用 `"command": "devkit-mcp"`
 > - ❌ **未配置环境变量**：需要在 MCP 配置中使用**完整路径**，例如：
 >   ```json
 >   {
 >     "mcpServers": {
->       "sanshu": {
->         "command": "C:\\Program Files\\sanshu\\sanshu-mcp.exe"
+>       "devkit": {
+>         "command": "C:\\Program Files\\devkit\\devkit-mcp.exe"
 >       }
 >     }
 >   }
@@ -366,8 +364,8 @@ sanshu-mcp --version
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/yuaotian/sanshu.git
-cd sanshu
+git clone https://github.com/aspect-build/devkit.git
+cd devkit
 
 # 2. 安装前端依赖
 pnpm install
@@ -389,14 +387,9 @@ cargo build --release
 ##### 📦 开发模式
 
 ```bash
-# 启动前端开发服务器（热重载）
-pnpm dev
-
-# 启动 Tauri 开发模式（同时启动前后端，支持热重载）
-pnpm tauri:dev
-
-# 或使用 Cargo 直接启动 Tauri 开发模式
-cargo tauri dev
+# 无端口模式：不使用任何本地开发服务器（不再提供热重载）
+# 只通过构建产物 dist/ 来运行 UI
+pnpm build
 ```
 
 ##### 🔨 构建打包
@@ -488,13 +481,10 @@ pnpm outdated
 
 # 更新 npm 依赖
 pnpm update
-
-# 运行前端预览服务器（预览构建后的产物）
-pnpm preview
 ```
 
 **💡 提示**：
-- 开发时推荐使用 `pnpm tauri:dev`，可同时启动前后端并支持热重载
+- 开发时推荐使用 `pnpm build`，可生成 `dist/` 前端产物
 - 首次构建 Release 版本可能需要较长时间（5-10 分钟），后续增量构建会快很多
 - 如遇到奇怪的编译错误，尝试 `cargo clean` 后重新构建
 - Windows 用户如遇到权限问题，请以管理员身份运行 PowerShell
@@ -506,8 +496,8 @@ pnpm preview
 ```json
 {
   "mcpServers": {
-    "sanshu": {
-      "command": "sanshu-mcp"
+    "devkit": {
+      "command": "devkit-mcp"
     }
   }
 }
@@ -526,15 +516,15 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 **配置步骤**：
 
 1. 打开编辑器的 **系统提示词 / 项目级默认提示词** 配置入口
-2. 将仓库根目录下 `sanshu_prompt_word.md` 的完整内容复制到该配置中
-3. 确保已按上文「配置 MCP 客户端」部分，将 `sanshu-mcp` 注册为 MCP 服务并能正常连接
+2. 将仓库根目录下 `devkit_prompt_word.md` 的完整内容复制到该配置中
+3. 确保已按上文「配置 MCP 客户端」部分，将 `devkit-mcp` 注册为 MCP 服务并能正常连接
 4. 之后，在编辑器中调用 AI 时，它将自动遵循 AURA-X-KYS 协议
 
 ---
 
 ## 🚀 核心特性与流程
 
-### 1️⃣ sou 工具的智能等待机制
+### 1️⃣ index 工具的智能等待机制
 
 当 AI 发起搜索请求时，如果系统检测到索引正在更新，会自动进行智能等待，确保结果的准确性。
 
@@ -559,14 +549,14 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
                    +---------------+
 ```
 
-### 2️⃣ ji 工具的索引预热功能
+### 2️⃣ store 工具的索引预热功能
 
-当用户通过 ji 工具操作记忆时，系统会智能预判可能需要的代码上下文，并在后台默默触发索引预热。
+当用户通过 store 工具操作记忆时，系统会智能预判可能需要的代码上下文，并在后台默默触发索引预热。
 
 ```text
-+------+    Add/Read    +-----+    Trigger     +--------+
-| User | -------------> | ji  | -------------> | Indexer|
-+------+     Memory     +-----+   Background   +--------+
++------+    Add/Read    +-------+    Trigger     +--------+
+| User | -------------> | store | -------------> | Indexer|
++------+     Memory     +-------+   Background   +--------+
                                                    |
                                                    v
                                             +-------------+
@@ -578,14 +568,14 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
                                             +-------------+
 ```
 
-### 3️⃣ zhi 工具的索引状态可视化
+### 3️⃣ cache 工具的索引状态可视化
 
 在 MCP 弹窗中，用户可以实时看到后台索引的进度，不再面对黑盒等待。
 
 ```text
-+-----+      Request      +-----+      Poll       +--------+
-| AI  | ----------------> | zhi | <-------------> | Status |
-+-----+                   +-----+                 +--------+
++-----+      Request      +-------+      Poll       +--------+
+| AI  | ----------------> | cache | <-------------> | Status |
++-----+                   +-------+                 +--------+
                              |
                              v
                      +---------------+
@@ -654,16 +644,16 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 ### 为什么推荐使用 Augment Ace
 
 1. **一站式开发体验**：在同一个编辑器中完成编写、重构、搜索、记忆管理，无需在多种工具之间来回切换。
-2. **强约束、强可控**：结合本仓库提供的提示词协议（`sanshu_prompt_word.md`），可以让 AI 严格遵循 KISS / YAGNI / SOLID，并通过 zhi 工具进行关键决策确认。
-3. **对 Rust / 前端项目友好**：三术后端基于 Rust 构建，前端基于 TypeScript/Vue3，在 Ace 中调用这些能力可以获得稳定、低延迟的协同体验。
+2. **强约束、强可控**：结合本仓库提供的提示词协议（`devkit_prompt_word.md`），可以让 AI 严格遵循 KISS / YAGNI / SOLID，并通过 cache 工具进行关键决策确认。
+3. **对 Rust / 前端项目友好**：DevKit后端基于 Rust 构建，前端基于 TypeScript/Vue3，在 Ace 中调用这些能力可以获得稳定、低延迟的协同体验。
 
 ---
 
 ### AURA-X-KYS 提示词协议
 
-仓库根目录下的 `sanshu_prompt_word.md` 定义了 **AURA-X-KYS 协议**，是为三术环境量身定制的 AI 行为规范与工作流提示词。
+仓库根目录下的 `devkit_prompt_word.md` 定义了 **AURA-X-KYS 协议**，是为DevKit环境量身定制的 AI 行为规范与工作流提示词。
 
-#### 与三术 MCP 的协同关系
+#### 与DevKit MCP 的协同关系
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -674,18 +664,18 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 │         └────────────────┼────────────────┘                 │
 │                          ▼                                  │
 │              ┌───────────────────────┐                      │
-│              │   三术 MCP 工具集     │                      │
+│              │   DevKit MCP 工具集     │                      │
 │              │  ┌─────┬─────┬─────┐  │                      │
-│              │  │ zhi │ ji  │ sou │  │                      │
+│              │  │cache│store│index│  │                      │
 │              │  │ 智  │ 记  │ 搜  │  │                      │
 │              │  └─────┴─────┴─────┘  │                      │
 │              └───────────────────────┘                      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-- **zhi (智)**：作为强制交互网关，确保 AI 的所有关键决策都经过用户确认
-- **ji (记)**：持久化存储项目规则、偏好和上下文，保持长期协作的一致性
-- **sou (搜)**：提供语义搜索能力，让 AI 能够快速定位和理解代码
+- **cache**：作为强制交互网关，确保 AI 的所有关键决策都经过用户确认
+- **store**：持久化存储项目规则、偏好和上下文，保持长期协作的一致性
+- **index**：提供语义搜索能力，让 AI 能够快速定位和理解代码
 
 #### 核心价值与优势
 
@@ -694,7 +684,7 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 | **8 条不可覆盖原则** | 核心设计哲学、绝对控制、知识权威性、持久化记忆、上下文感知、静默执行、效率优先、质量保证 |
 | **4 级任务复杂度分级** | Level 1 (原子任务) → Level 2 (标准任务) → Level 3 (复杂任务) → Level 4 (探索任务) |
 | **置信度驱动的操作模式** | 根据任务复杂度和置信度自动选择 INTERACTIVE（交互）或 AUTONOMOUS（自主）模式 |
-| **强制交互网关** | 所有关键决策必须通过三术 MCP 的 zhi 工具确认，AI 绝不自作主张 |
+| **强制交互网关** | 所有关键决策必须通过 DevKit MCP 的 cache 工具确认，AI 绝不自作主张 |
 | **动态协议规则** | 支持智能错误处理、流程动态调整（升级/降级） |
 
 #### 精简版提示词配置
@@ -706,12 +696,12 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 2. **每次对话时附带**（备选）：在每次发送消息时，在末尾附带精简版提示词，避免因 AI 模型上下文丢失导致协议失效
 
 ⚠️ **重要提示**：
-- 如果**未配置** `sou` 索引功能，请使用「标准版」提示词（仅包含 `zhi` 和 `ji`）
-- 如果**已完成**索引配置，请使用「完整版」提示词（包含 `zhi`、`ji` 和 `sou`）
+- 如果**未配置** `index` 索引功能，请使用「标准版」提示词（仅包含 `cache` 和 `store`）
+- 如果**已完成**索引配置，请使用「完整版」提示词（包含 `cache`、`store` 和 `index`）
 - 使用未配置的功能会导致工具调用失败
 
 <details>
-<summary>📋 标准版精简提示词（zhi + ji）</summary>
+<summary>📋 标准版精简提示词（cache + store）</summary>
 
 ```markdown
 # AURA-X-KYS 精简协议
@@ -723,38 +713,50 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 
 ## 行为契约（不可违反）
 1. **代码质量契约**：所有代码生成、重构建议必须严格遵循 KISS / YAGNI / SOLID 原则
-2. **交互控制契约**：所有关键决策、方案选择、任务完成确认必须通过 `zhi` (智) 工具进行
-3. **记忆管理契约**：对话开始时加载项目记忆`ji` (记)，用户说"请记住"时存储重要信息到 `ji` (记)
-4. **知识权威性契约**：当需要最新框架文档或 AI 内部知识不确定时，优先使用 `context7` 工具查询权威来源
+2. **交互控制契约**：所有关键决策、方案选择、任务完成确认必须通过 `cache` 工具进行
+3. **记忆管理契约**：对话开始时加载项目记忆 `store`，用户说"请记住"时存储重要信息到 `store`
+4. **知识权威性契约**：当需要最新框架文档或 AI 内部知识不确定时，优先使用 `docs` 工具查询权威来源
 
 ## 禁止行为
-- ❌ 禁止直接向用户提问（必须通过 `zhi` 工具）
-- ❌ 禁止单方面结束任务（必须通过 `zhi` 确认）
+- ❌ 禁止直接向用户提问（必须通过 `cache` 工具）
+- ❌ 禁止单方面结束任务（必须通过 `cache` 确认）
 - ❌ 禁止生成总结性 Markdown 文档
 - ❌ 禁止生成测试脚本
 - ❌ 禁止执行编译、运行命令（用户自行处理）
 
 ## 工具调用规则
 
-### ji (记) - 记忆管理
-- **对话开始**：调用 `ji` 的 `回忆` 功能加载项目记忆
-- **用户说"请记住"**：调用 `ji` 的 `记忆` 功能存储信息
+### store - 记忆管理
+- **对话开始**：调用 `store` 的 `回忆` 功能加载项目记忆
+- **用户说"请记住"**：调用 `store` 的 `记忆` 功能存储信息
 - **分类**：`rule`(规则) / `preference`(偏好) / `pattern`(模式) / `context`(上下文)
 
-### zhi (智) - 强制交互网关
-- **需求不明确时**：通过 `zhi` 提供预定义选项让用户澄清
-- **存在多个方案时**：通过 `zhi` 列出所有方案（附 KISS/YAGNI/SOLID 分析和推荐标签）
-- **计划变更时**：通过 `zhi` 提出并获得用户批准
-- **任务完成前**：必须通过 `zhi` 请求最终确认
+### cache - 强制交互网关
+- **需求不明确时**：通过 `cache` 提供预定义选项让用户澄清
+- **存在多个方案时**：通过 `cache` 列出所有方案（附 KISS/YAGNI/SOLID 分析和推荐标签）
+- **计划变更时**：通过 `cache` 提出并获得用户批准
+- **任务完成前**：必须通过 `cache` 请求最终确认
 
-### context7 - 框架文档查询
+#### 弹窗交互（UI 阻塞等待）的两套调用模式
+
+**模式 A：单工具阻塞等待（推荐简单场景）**
+- 调用：`cache_sync`
+- 行为：会弹出 UI 交互窗口，并在一定时间内阻塞等待用户完成输入/选择，然后直接返回最终结果。
+- 超时：若等待超过阈值可能返回 `PENDING`，此时按模式 B 用 `cache_get` 取回结果。
+
+**模式 B：双工具更稳（推荐复杂/耗时交互）**
+- 调用：先 `cache`（立即返回 `task_id`），再 `cache_get(task_id)` 取回结果。
+- 行为：`cache` 不阻塞；UI 交互结束后，用 `cache_get` 获取最终内容。
+- 注意：不要高频轮询，按提示在合适时机调用 `cache_get` 一次即可。
+
+### docs - 框架文档查询
 - **获取最新文档时**：当需要查询框架/库的最新官方文档时使用（如 Next.js、React、Spring 等）
-- **AI 知识不确定时**：当 AI 内部知识可能过时或不确定时，优先使用 `context7` 查询权威文档
+- **AI 知识不确定时**：当 AI 内部知识可能过时或不确定时，优先使用 `docs` 查询权威文档
 - **避免幻觉**：使用实时文档而非依赖训练数据，确保信息准确性
 - **库标识符格式**：使用 `owner/repo` 格式（如 `vercel/next.js`、`facebook/react`）。如果不确定完整标识符，可以先使用简短名称，工具会自动搜索候选库。
 
 ## 对话启动检查
-1. 调用 `ji` 加载项目记忆
+1. 调用 `store` 加载项目记忆
 2. 评估任务复杂度和置信度
 3. 声明将遵循 KISS / YAGNI / SOLID 原则
 
@@ -767,7 +769,7 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 </details>
 
 <details>
-<summary>📋 完整版精简提示词（zhi + ji + sou）</summary>
+<summary>📋 完整版精简提示词（cache + store + index）</summary>
 
 ```markdown
 # AURA-X-KYS 精简协议
@@ -779,44 +781,56 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 
 ## 行为契约（不可违反）
 1. **代码质量契约**：所有代码生成、重构建议必须严格遵循 KISS / YAGNI / SOLID 原则
-2. **交互控制契约**：所有关键决策、方案选择、任务完成确认必须通过 `zhi` (智) 工具进行
-3. **记忆管理契约**：对话开始时加载项目记忆`ji` (记)，用户说"请记住"时存储重要信息到 `ji` (记)
-4. **搜索优先契约**：需要查找代码时，优先使用 `sou` (搜) 进行自然语义搜索相关代码
-5. **知识权威性契约**：当需要最新框架文档或 AI 内部知识不确定时，优先使用 `context7` 工具查询权威来源
+2. **交互控制契约**：所有关键决策、方案选择、任务完成确认必须通过 `cache` 工具进行
+3. **记忆管理契约**：对话开始时加载项目记忆 `store`，用户说"请记住"时存储重要信息到 `store`
+4. **搜索优先契约**：需要查找代码时，优先使用 `index` 进行自然语义搜索相关代码
+5. **知识权威性契约**：当需要最新框架文档或 AI 内部知识不确定时，优先使用 `docs` 工具查询权威来源
 
 ## 禁止行为
-- ❌ 禁止直接向用户提问（必须通过 `zhi` 工具）
-- ❌ 禁止单方面结束任务（必须通过 `zhi` 确认）
+- ❌ 禁止直接向用户提问（必须通过 `cache` 工具）
+- ❌ 禁止单方面结束任务（必须通过 `cache` 确认）
 - ❌ 禁止生成总结性 Markdown 文档
 - ❌ 禁止生成测试脚本
 - ❌ 禁止执行编译、运行命令（用户自行处理）
 
 ## 工具调用规则
 
-### ji (记) - 记忆管理
-- **对话开始**：调用 `ji` 的 `回忆` 功能加载项目记忆
-- **用户说"请记住"**：调用 `ji` 的 `记忆` 功能存储信息
+### store - 记忆管理
+- **对话开始**：调用 `store` 的 `回忆` 功能加载项目记忆
+- **用户说"请记住"**：调用 `store` 的 `记忆` 功能存储信息
 - **分类**：`rule`(规则) / `preference`(偏好) / `pattern`(模式) / `context`(上下文)
 
-### zhi (智) - 强制交互网关
-- **需求不明确时**：通过 `zhi` 提供预定义选项让用户澄清
-- **存在多个方案时**：通过 `zhi` 列出所有方案（附 KISS/YAGNI/SOLID 分析和推荐标签）
-- **计划变更时**：通过 `zhi` 提出并获得用户批准
-- **任务完成前**：必须通过 `zhi` 请求最终确认
+### cache - 强制交互网关
+- **需求不明确时**：通过 `cache` 提供预定义选项让用户澄清
+- **存在多个方案时**：通过 `cache` 列出所有方案（附 KISS/YAGNI/SOLID 分析和推荐标签）
+- **计划变更时**：通过 `cache` 提出并获得用户批准
+- **任务完成前**：必须通过 `cache` 请求最终确认
 
-### sou (搜) - 语义搜索
-- **查找代码时**：使用 `sou` 进行语义搜索，快速定位相关代码
-- **理解上下文时**：使用 `sou` 搜索相关实现、调用关系
-- **编辑前**：使用 `sou` 确认要修改的代码位置和影响范围
+#### 弹窗交互（UI 阻塞等待）的两套调用模式
 
-### context7 - 框架文档查询
+**模式 A：单工具阻塞等待（推荐简单场景）**
+- 调用：`cache_sync`
+- 行为：会弹出 UI 交互窗口，并在一定时间内阻塞等待用户完成输入/选择，然后直接返回最终结果。
+- 超时：若等待超过阈值可能返回 `PENDING`，此时按模式 B 用 `cache_get` 取回结果。
+
+**模式 B：双工具更稳（推荐复杂/耗时交互）**
+- 调用：先 `cache`（立即返回 `task_id`），再 `cache_get(task_id)` 取回结果。
+- 行为：`cache` 不阻塞；UI 交互结束后，用 `cache_get` 获取最终内容。
+- 注意：不要高频轮询，按提示在合适时机调用 `cache_get` 一次即可。
+
+### index - 语义搜索
+- **查找代码时**：使用 `index` 进行语义搜索，快速定位相关代码
+- **理解上下文时**：使用 `index` 搜索相关实现、调用关系
+- **编辑前**：使用 `index` 确认要修改的代码位置和影响范围
+
+### docs - 框架文档查询
 - **获取最新文档时**：当需要查询框架/库的最新官方文档时使用（如 Next.js、React、Spring 等）
-- **AI 知识不确定时**：当 AI 内部知识可能过时或不确定时，优先使用 `context7` 查询权威文档
+- **AI 知识不确定时**：当 AI 内部知识可能过时或不确定时，优先使用 `docs` 查询权威文档
 - **避免幻觉**：使用实时文档而非依赖训练数据，确保信息准确性
 - **库标识符格式**：使用 `owner/repo` 格式（如 `vercel/next.js`、`facebook/react`）。如果不确定完整标识符，可以先使用简短名称，工具会自动搜索候选库。
 
 ## 对话启动检查
-1. 调用 `ji` 加载项目记忆
+1. 调用 `store` 加载项目记忆
 2. 评估任务复杂度和置信度
 3. 声明将遵循 KISS / YAGNI / SOLID 原则
 
@@ -835,17 +849,17 @@ PS：如果你没有把程序所在目录加入 PATH，请用上面示例那样�
 <details>
 <summary>📋 点击展开查看完整提示词说明</summary>
 
-完整的 AURA-X-KYS 提示词协议存储在项目根目录的 [`sanshu_prompt_word.md`](sanshu_prompt_word.md) 文件中。
+完整的 AURA-X-KYS 提示词协议存储在项目根目录的 [`devkit_prompt_word.md`](devkit_prompt_word.md) 文件中。
 
 **查看方式**：
 - **GitHub**：点击上方链接直接查看
-- **本地**：在项目根目录找到 `sanshu_prompt_word.md` 文件
+- **本地**：在项目根目录找到 `devkit_prompt_word.md` 文件
 
 **使用方法**：
-1. 打开 `sanshu_prompt_word.md` 文件
+1. 打开 `devkit_prompt_word.md` 文件
 2. 复制完整内容
 3. 粘贴到 AI 编辑器的「系统提示词」或「项目级默认提示词」配置中
-4. 确保已按上文「配置 MCP 客户端」部分，将「三术」注册为 MCP 服务
+4. 确保已按上文「配置 MCP 客户端」部分，将「DevKit」注册为 MCP 服务
 
 > 💡 **提示**：完整版提示词包含详细的协议规则、任务复杂度分级、操作模式说明等内容，适合需要深入了解协议细节的用户。如果只需要快速上手，可以使用下方的「精简版提示词」。
 
@@ -934,16 +948,16 @@ git push origin v0.2.4
 
 | 平台 | 文件名格式 |
 |------|-----------|
-| macOS ARM64 | `sanshu-cli-v{version}-macos-aarch64.tar.gz` |
-| macOS x86_64 | `sanshu-cli-v{version}-macos-x86_64.tar.gz` |
-| Linux x86_64 | `sanshu-cli-v{version}-linux-x86_64.tar.gz` |
-| Windows x86_64 | `sanshu-cli-v{version}-windows-x86_64.zip` |
+| macOS ARM64 | `devkit-cli-v{version}-macos-aarch64.tar.gz` |
+| macOS x86_64 | `devkit-cli-v{version}-macos-x86_64.tar.gz` |
+| Linux x86_64 | `devkit-cli-v{version}-linux-x86_64.tar.gz` |
+| Windows x86_64 | `devkit-cli-v{version}-windows-x86_64.zip` |
 
 ### 验证发布
 
 发布完成后，可通过以下方式验证：
 
-1. **GitHub Releases**：访问 [Releases 页面](https://github.com/yuaotian/sanshu/releases) 确认新版本已发布
+1. **GitHub Releases**：访问 [Releases 页面](https://github.com/aspect-build/devkit/releases) 确认新版本已发布
 2. **构建产物**：检查 Release 中是否包含所有平台的构建产物
 3. **Homebrew 更新**：
    ```bash
@@ -951,10 +965,10 @@ git push origin v0.2.4
    brew update
 
    # 查看可用版本
-   brew info sanshu
+   brew info devkit
 
    # 升级到新版本
-   brew upgrade sanshu
+   brew upgrade devkit
    ```
 
 ---
@@ -963,7 +977,7 @@ git push origin v0.2.4
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                        三术 技术架构                              │
+│                        DevKit 技术架构                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │                    前端层 (Vue 3 + TypeScript)           │    │
@@ -1020,49 +1034,49 @@ git push origin v0.2.4
 
 </div>
 
-"三术"的命名灵感源自《道德经》。在 AI 辅助编程的语境下，这象征着从无到有、从简单到复杂的创造过程：
+"DevKit"的命名灵感源自《道德经》。在 AI 辅助编程的语境下，这象征着从无到有、从简单到复杂的创造过程：
 
 | 概念 | 对应 | 含义 |
 |:---:|:---:|:---|
 | **道** | The Way | 编程的核心思想与逻辑 |
-| **一** | 智 (zhi) | 确立方向，明辨是非。所有的创造始于正确的决策与审查 |
-| **二** | 记 (ji) | 积累经验，形成规范。在决策的基础上，沉淀为可复用的知识与记忆 |
-| **三** | 搜 (sou) | 探索未知，连接万物。基于智慧与记忆，通过搜索连接广阔的代码世界 |
+| **一** | Cache | 确立方向，明辨是非。所有的创造始于正确的决策与审查 |
+| **二** | Store | 积累经验，形成规范。在决策的基础上，沉淀为可复用的知识与记忆 |
+| **三** | Index | 探索未知，连接万物。基于智慧与记忆，通过搜索连接广阔的代码世界 |
 | **万物** | Myriad Things | 通过这三者的循环互动，构建出无限可能的软件生态 |
 
-> 三术不仅仅是一组工具，更是一种 **"控制" (Control)**、**"协作" (Collaboration)** 与 **"智能" (Intelligence)** 的平衡艺术。它让开发者在享受 AI 带来的效率提升的同时，依然牢牢掌握着创造的主导权。
+> DevKit不仅仅是一组工具，更是一种 **"控制" (Control)**、**"协作" (Collaboration)** 与 **"智能" (Intelligence)** 的平衡艺术。它让开发者在享受 AI 带来的效率提升的同时，依然牢牢掌握着创造的主导权。
 
 ---
 
 ## ❓ 常见问题 (FAQ)
 
-### 三术与其他 MCP 工具的区别
+### DevKit与其他 MCP 工具的区别
 
-三术通过 **zhi (智)**、**ji (记)**、**sou (搜)** 三大核心组件，实现了**强制交互**、**全局记忆**和**语义搜索**的深度融合。特别是其独有的 **AURA-X-KYS 协议**，确保 AI 严格遵循工程规范（KISS/YAGNI/SOLID），并通过 MCP 弹窗让用户掌握最终决策权，从而避免了传统 AI 助手容易产生的幻觉和自作主张问题。
+DevKit通过 **cache**、**store**、**index** 三大核心组件，实现了**强制交互**、**全局记忆**和**语义搜索**的深度融合。特别是其独有的 **AURA-X-KYS 协议**，确保 AI 严格遵循工程规范（KISS/YAGNI/SOLID），并通过 MCP 弹窗让用户掌握最终决策权，从而避免了传统 AI 助手容易产生的幻觉和自作主张问题。
 
 ### 如何验证 MCP 服务是否正常运行
 
-1. **检查日志**：查看临时目录下的 `sanshu-mcp.log` 文件（具体路径取决于操作系统）。
-2. **使用 MCP 客户端**：在 Claude Desktop 或 Augment Ace 中，如果能看到 "三术" 工具集（zhi/ji/sou），说明连接正常。
-3. **状态弹窗**：在编辑器中触发三术工具时，应该能看到右下角的交互弹窗。
+1. **检查日志**：查看临时目录下的 `devkit-mcp.log` 文件（具体路径取决于操作系统）。
+2. **使用 MCP 客户端**：在 Claude Desktop 或 Augment Ace 中，如果能看到 "DevKit" 工具集（cache/store/index），说明连接正常。
+3. **状态弹窗**：在编辑器中触发DevKit工具时，应该能看到右下角的交互弹窗。
 
 ### 索引速度慢或卡住的解决方案
 
 - **智能等待**：系统会自动平衡索引速度和系统资源，初次索引可能会较慢，请耐心等待。
 - **资源检查**：确保系统有足够的内存和磁盘空间。
-- **重启服务**：尝试重启 MCP 客户端（如重启 Claude Desktop 或 Augment Ace），这将重新启动三术 MCP 服务。
+- **重启服务**：尝试重启 MCP 客户端（如重启 Claude Desktop 或 Augment Ace），这将重新启动DevKit MCP 服务。
 
 ### 如何清除或重建索引
 
 索引数据和配置文件存储在系统的标准配置目录下：
-- **Windows**: `%APPDATA%\sanshu\`
-- **macOS/Linux**: `~/.config/sanshu/`
+- **Windows**: `%APPDATA%\devkit\`
+- **macOS/Linux**: `~/.config/devkit/`
 
 若需完全重置，可以删除该目录下的相关数据库文件或配置文件。
 
 ### 支持哪些编程语言
 
-三术的语义搜索 (`sou`) 支持几乎所有主流编程语言和配置文件，包括但不限于：
+DevKit的语义搜索 (`index`) 支持几乎所有主流编程语言和配置文件，包括但不限于：
 - Python (`.py`), JavaScript/TypeScript (`.js`, `.ts`, `.jsx`, `.tsx`), Rust (`.rs`), Go (`.go`), Java (`.java`), C/C++ (`.c`, `.cpp`, `.h`)
 - 配置文件: `.json`, `.yaml`, `.toml`, `.xml`, `.md`, `.sql`, `.sh` 等。
 您可以根据需要在设置中自定义索引的文件扩展名。
@@ -1073,7 +1087,7 @@ git push origin v0.2.4
 
 ### 与 Augment Ace 之外的其他 AI 编辑器的兼容性
 
-三术基于标准的 **Model Context Protocol (MCP)** 构建，因此理论上兼容任何支持 MCP 的客户端，包括：
+DevKit基于标准的 **Model Context Protocol (MCP)** 构建，因此理论上兼容任何支持 MCP 的客户端，包括：
 - **Claude Desktop App**
 - **Augment Ace**
 - **Cursor** (通过 MCP 支持)
@@ -1095,7 +1109,7 @@ git push origin v0.2.4
 
 ```mermaid
 timeline
-    title 三术项目发展路线图
+    title DevKit项目发展路线图
     section 2025-Q4
         Prompt Enhancer 提示词增强 : done, prom-enh
         ACE 公益号池版本上线 : done, ace-pool
@@ -1137,7 +1151,7 @@ timeline
 
 ### 🎁 ACE+PromptEnhancer 公益号池版本
 
-> **公益计划** - 让更多开发者免 Token 开箱即用
+> **公益计划** - 让更多开发者免密钥开箱即用
 
 <div align="center">
 
@@ -1156,8 +1170,8 @@ timeline
 </div>
 
 **核心价值**：
-- 🆓 **零门槛使用**：无需配置 API Token，直接体验完整功能
-- 🌟 **公益号池**：基于现有 Token 资源构建的共享服务
+- 🆓 **零门槛使用**：无需配置 API 密钥，直接体验完整功能
+- 🌟 **公益号池**：基于现有密钥资源构建的共享服务
 - 🚀 **开箱即用**：一键启动，立即获得 AI 辅助编程体验
 
 **技术架构**：
@@ -1172,7 +1186,7 @@ timeline
 | 💬 贡献反馈 | 🤝 社区共建 |
 |:-----------:|:-----------:|
 | 在 GitHub Issues<br/>分享使用体验 | 提交代码<br/>或功能建议 |
-| [提交反馈](https://github.com/yuaotian/sanshu/issues) | [贡献指南](#-贡献指南) |
+| [提交反馈](https://github.com/aspect-build/devkit/issues) | [贡献指南](#-贡献指南) |
 | 💡 **帮助改进** | 🌍 **共建生态** |
 
 </div>
@@ -1225,7 +1239,7 @@ timeline
 ```
 MIT License
 
-Copyright (c) 2025 sanshu
+Copyright (c) 2025 devkit
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1244,12 +1258,12 @@ copies or substantial portions of the Software.
 
 特此感谢以下项目和贡献者：
 
-- [寸止 (Cunzhi)](https://github.com/yuaotian/cunzhi) - 为本项目提供了坚实的基础
+- [Model Context Protocol](https://modelcontextprotocol.io/) - Provided the standard protocol for AI-tool collaboration
 - [Model Context Protocol](https://modelcontextprotocol.io/) - 提供了 AI 与工具协同的标准协议
 - [Tauri](https://tauri.app/) - 提供了跨平台桌面应用框架
 - [Augment Code](https://www.augmentcode.com/) - 提供了优秀的 AI 编程助手
 
-三术 (sanshu) 是在原项目基础上的进一步探索与创新，我们向所有贡献者致以诚挚的谢意。
+DevKit (devkit) 是在原项目基础上的进一步探索与创新，我们向所有贡献者致以诚挚的谢意。
 
 ---
 
@@ -1257,6 +1271,6 @@ copies or substantial portions of the Software.
 
 **如果这个项目对你有帮助，请给我们一个 ⭐ Star！**
 
-Made with ❤️ by the 煎饼果子(86)
+Made with ❤️ by the DevKit Team
 
 </div>

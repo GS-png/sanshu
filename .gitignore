@@ -55,7 +55,7 @@ test_client.py
 .env.production.local
 
 # Memory files (user-specific)
-.sanshu-memory/
+.devkit-memory/
 
 # Configuration files (user-specific)
 config.json
@@ -80,4 +80,5 @@ scripts/
 !ACEMCP.md
 !README.md
 !INSTALL.md
+!devkit_prompt_word.md
 metadata.json

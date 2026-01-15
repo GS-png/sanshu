@@ -5,12 +5,12 @@ import ProjectInfoCard from '../common/ProjectInfoCard.vue'
 const features = [
   {
     icon: 'i-carbon-chat text-lg text-blue-600 dark:text-blue-400',
-    title: 'Zhi 智能审查工具',
-    subtitle: '三术交互系统',
+    title: 'Cache 智能审查工具',
+    subtitle: 'DevKit System',
     iconBg: 'bg-blue-100',
     features: [
       '智能代码审查交互',
-      '支持文本和图片输入',
+      '支持文本和食材输入',
       '预定义选项支持',
       'Markdown 渲染',
       '跨平台快捷键支持',

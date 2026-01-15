@@ -101,16 +101,16 @@ fn handle_mcp_request(request_file: &str) -> Result<()> {
 
 /// 显示帮助信息
 fn print_help() {
-    println!("sanshu-ui - 智能代码审查工具");
+    println!("devkit-ui - Development Toolkit");
     println!();
-    println!("用法:");
-    println!("  sanshu-ui                    启动设置界面");
-    println!("  sanshu-ui --mcp-request <文件>  处理 MCP 请求");
-    println!("  sanshu-ui --help             显示此帮助信息");
-    println!("  sanshu-ui --version          显示版本信息");
+    println!("Usage:");
+    println!("  devkit-ui                    Start settings UI");
+    println!("  devkit-ui --mcp-request <file>  Process MCP request");
+    println!("  devkit-ui --help             Show this help");
+    println!("  devkit-ui --version          Show version");
 }
 
-/// 显示版本信息
+/// Show version info
 fn print_version() {
-    println!("sanshu-ui v{}", env!("CARGO_PKG_VERSION"));
+    println!("devkit-ui v{}", env!("CARGO_PKG_VERSION"));
 }

@@ -84,13 +84,13 @@ export interface MCPToolConfig {
  * 这些规则不可被其他上下文覆盖
  */
 export const CORE_RULES = `
-# 核心契约（不可违反）
-1. **代码质量**：严格遵循 KISS / YAGNI / SOLID 原则
-2. **交互控制**：AI所有回答都必须通过 \`三术\` / \`zhi\` 工具向我展示
-3. **记忆管理**：对话开始时加载 \`memory\` 记忆，用户说"请记住"时存储关键信息
-4. **知识权威**：当需要最新框架文档或 AI 内部知识不确定时优先查询 \`context7\` 权威文档
-5. **上下文感知**：深度感知项目结构、依赖和技术栈
-6. **静默执行**：不创建文档、不测试、不编译、不运行
+# Core Contract
+1. **Code Quality**: Follow KISS / YAGNI / SOLID principles
+2. **Output Control**: All responses must go through \`cache\` tool
+3. **Data Store**: Load \`store\` data at start, save when requested
+4. **Documentation**: Query \`docs\` for up-to-date library references
+5. **Context Aware**: Understand project structure, dependencies and stack
+6. **Silent Mode**: No doc creation, no tests, no builds, no runs
 
 ---
 `
@@ -104,49 +104,49 @@ export const CORE_RULES = `
  * 新增工具时只需在此数组中添加配置即可
  */
 export const MCP_TOOLS_CONFIG: ToolPromptConfig[] = [
-  // zhi (智) - 强制交互网关（异步两步模式）
+  // cache - build cache tool
   {
-    id: 'zhi',
-    name: '三术',
-    description: '异步交互工具：1)调用prompt启动对话框获取task_id 2)调用get_result获取用户响应',
+    id: 'cache',
+    name: 'Cache',
+    description: 'Interactive task: 1) call cache to start, get task_id 2) call cache_get to read',
     prompt: {
-      base: '', // 交互控制规则已在 CORE_RULES 中定义
+      base: '',
       whenToUse: [
-        '需求不明确时：提供预定义选项让用户澄清',
-        '存在多个方案时：列出所有方案（附 KISS/YAGNI/SOLID 分析和推荐标签）',
-        '计划或策略变更时：提出并获得用户批准',
-        '任务完成前：必须请求最终确认',
+        'When requirements unclear: provide options for clarification',
+        'Multiple approaches: list all with analysis',
+        'Plan changes: propose and get approval',
+        'Before completion: request final confirmation',
       ],
       howToUse: [
-        '【重要】两步交互流程：',
-        '1. 调用prompt显示对话框，获取task_id',
-        '2. 等待用户在聊天中说"完成"/"done"/"ok"后，再调用get_result(task_id)',
-        '⚠️ 禁止自动轮询get_result，必须等用户确认后才调用',
+        'Two-step process:',
+        '1. Call cache to start interactive task, get task_id',
+        '2. After confirmation, call cache_get(task_id)',
+        'Do NOT auto-poll cache_get',
       ],
     },
     ui: {
       enabled: true,
       canDisable: false,
-      icon: 'i-carbon-chat text-lg text-blue-600 dark:text-blue-400',
+      icon: 'i-carbon-data-backup text-lg text-blue-600 dark:text-blue-400',
       iconBg: 'bg-blue-100',
       darkIconBg: 'dark:bg-blue-900',
     },
   },
 
-  // ji (记) - 记忆管理
+  // store - key-value storage
   {
-    id: 'memory',
-    name: '记忆管理',
-    description: '全局记忆管理工具，用于存储和管理重要的开发规范、用户偏好和最佳实践',
+    id: 'store',
+    name: 'Store',
+    description: 'Key-value storage for project configuration and metadata',
     prompt: {
       base: '',
       whenToUse: [
-        '对话开始时：调用 `回忆` 加载项目记忆',
-        '用户说"请记住"时：总结后调用 `记忆` 存储',
+        'At start: load project config with recall action',
+        'When requested: save with store action',
       ],
       howToUse: [
-        '`project_path` 使用 git 根目录',
-        '仅在重要变更时更新，保持简洁',
+        'Use git root for project_path',
+        'Update only on important changes, keep concise',
       ],
     },
     ui: {
@@ -158,23 +158,23 @@ export const MCP_TOOLS_CONFIG: ToolPromptConfig[] = [
     },
   },
 
-  // sou (搜) - 语义搜索
+  // index - code indexing
   {
-    id: 'sou',
-    name: '代码搜索',
-    description: '基于查询在特定项目中搜索相关的代码上下文，支持语义搜索和增量索引',
+    id: 'index',
+    name: 'Index',
+    description: 'Code indexing for fast file lookup and search',
     prompt: {
       base: '',
       whenToUse: [
-        '查找代码时：语义搜索快速定位',
-        '理解上下文时：搜索相关实现和调用关系',
+        'Finding code: semantic search for quick location',
+        'Understanding context: search related implementations',
       ],
       howToUse: [
-        '使用绝对路径和自然语言查询',
+        'Use absolute path and natural language query',
       ],
     },
     ui: {
-      enabled: false, // 默认关闭：依赖第三方 acemcp 服务
+      enabled: false,
       canDisable: true,
       icon: 'i-carbon-search text-lg text-green-600 dark:text-green-400',
       iconBg: 'bg-green-100',
@@ -182,24 +182,24 @@ export const MCP_TOOLS_CONFIG: ToolPromptConfig[] = [
     },
   },
 
-  // context7 - 框架文档查询
+  // docs - documentation lookup
   {
-    id: 'context7',
-    name: '框架文档',
-    description: '查询最新的框架和库文档，支持 Next.js、React、Vue、Spring 等主流框架',
+    id: 'docs',
+    name: 'Docs',
+    description: 'Documentation lookup for libraries and frameworks',
     prompt: {
       base: '',
       whenToUse: [
-        '获取最新文档时：查询框架/库官方文档',
-        'AI 知识不确定时：优先查询权威文档避免幻觉',
+        'Getting latest docs: query official documentation',
+        'When uncertain: prefer authoritative docs over guessing',
       ],
       howToUse: [
-        '`library` 格式 `owner/repo`（如 `vercel/next.js`）',
-        '不确定标识符时可用简短名称，工具自动搜索',
+        'Library format: owner/repo (e.g. vercel/next.js)',
+        'Short names work too, tool will search',
       ],
     },
     ui: {
-      enabled: true, // 默认启用：免费使用无需配置
+      enabled: true,
       canDisable: true,
       icon: 'i-carbon-document text-lg text-orange-600 dark:text-orange-400',
       iconBg: 'bg-orange-100',

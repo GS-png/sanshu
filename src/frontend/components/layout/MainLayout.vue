@@ -2,8 +2,8 @@
 import { invoke } from '@tauri-apps/api/core'
 import { useMessage } from 'naive-ui'
 import { ref } from 'vue'
-import IntroTab from '../tabs/IntroTab.vue'
 import HistoryTab from '../tabs/HistoryTab.vue'
+import IntroTab from '../tabs/IntroTab.vue'
 import McpToolsTab from '../tabs/McpToolsTab.vue'
 import PromptsTab from '../tabs/PromptsTab.vue'
 import SettingsTab from '../tabs/SettingsTab.vue'
@@ -42,10 +42,10 @@ const activeTab = ref('intro')
 const message = useMessage()
 
 // 图标加载错误处理
-function handleImageError(event: Event) {
-  const img = event.target as HTMLImageElement
-  // 如果图标加载失败，隐藏图片元素
-  img.style.display = 'none'
+function handleIconError(event: Event) {
+  const el = event.target as HTMLImageElement
+  // 如果图标加载失败，隐藏元素
+  el.style.display = 'none'
   console.warn('LOGO图标加载失败，已隐藏')
 }
 
@@ -63,7 +63,7 @@ async function showTestMcpPopup() {
 - ✅ 支持 Markdown 格式显示
 - ✅ 支持预定义选项选择
 - ✅ 支持自由文本输入
-- ✅ 支持图片粘贴上传
+- ✅ 支持食材粘贴上传
 
 ## 代码示例
 \`\`\`javascript
@@ -75,8 +75,8 @@ function testPopup() {
 \`\`\`
 
 请选择您要测试的功能，或者在下方输入框中添加您的反馈。`,
-      predefined_options: ['测试选项功能', '测试文本输入', '测试图片上传', '测试Markdown渲染'],
-      is_markdown: true,
+      menu: ['测试选项功能', '测试文本输入', '测试食材', '测试Markdown渲染'],
+      chalkboard: true,
     }
 
     // 调用Tauri命令创建popup窗口
@@ -101,12 +101,12 @@ function testPopup() {
           <div class="flex items-center justify-center gap-3 mb-3" data-guide="app-logo">
             <img
               src="/icons/icon-128.png"
-              alt="三术 Logo"
+              alt="DevKit Logo"
               class="w-10 h-10 rounded-xl shadow-lg"
-              @error="handleImageError"
+              @error="handleIconError"
             >
             <h1 class="text-4xl font-medium text-white">
-              三术
+              DevKit
             </h1>
             <!-- 测试按钮 -->
             <n-button

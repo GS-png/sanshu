@@ -281,14 +281,11 @@ pub async fn test_acemcp_connection(
 /// 读取日志文件内容
 #[tauri::command]
 pub async fn read_acemcp_logs(_state: State<'_, AppState>) -> Result<Vec<String>, String> {
-    // 使用 dirs::config_dir() 获取系统配置目录，确保跨平台兼容性
-    // Windows: C:\Users\<用户>\AppData\Roaming\sanshu\log\acemcp.log
-    // Linux: ~/.config/sanshu/log/acemcp.log
-    // macOS: ~/Library/Application Support/sanshu/log/acemcp.log
+    // Get system config directory for cross-platform compatibility
     let config_dir = dirs::config_dir()
-        .ok_or_else(|| "无法获取系统配置目录，请检查操作系统环境".to_string())?;
+        .ok_or_else(|| "Cannot get system config directory".to_string())?;
 
-    let log_path = config_dir.join("sanshu").join("log").join("acemcp.log");
+    let log_path = config_dir.join("devkit").join("log").join("acemcp.log");
 
     // 确保日志目录存在
     if let Some(log_dir) = log_path.parent() {
@@ -993,7 +990,7 @@ pub async fn test_acemcp_proxy_speed(
         None
     };
 
-    // 项目上传测速策略（按 zhi 确认：默认采样，可全量/可自定义上限）
+    // 项目上传测速策略（按 cache 确认：默认采样，可全量/可自定义上限）
     let project_upload_mode = project_upload_mode
         .unwrap_or_else(|| "sample".to_string())
         .to_lowercase();

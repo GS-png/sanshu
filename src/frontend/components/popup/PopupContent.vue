@@ -104,16 +104,16 @@ const md = new MarkdownIt({
 
 // 自定义链接渲染器 - 移除外链的点击功能，保持视觉样式
 md.renderer.rules.link_open = function (tokens, idx, options, env, renderer) {
-  const token = tokens[idx]
-  const href = token.attrGet('href')
+  const t = tokens[idx]
+  const href = t.attrGet('href')
 
   // 检查是否是外部链接
   if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
     // 移除href属性，保持其他属性
-    token.attrSet('href', '#')
-    token.attrSet('onclick', 'return false;')
-    token.attrSet('style', 'cursor: default; text-decoration: none;')
-    token.attrSet('title', `外部链接已禁用: ${href}`)
+    t.attrSet('href', '#')
+    t.attrSet('onclick', 'return false;')
+    t.attrSet('style', 'cursor: default; text-decoration: none;')
+    t.attrSet('title', `外部链接已禁用: ${href}`)
   }
 
   return renderer.renderToken(tokens, idx, options)
@@ -121,16 +121,16 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, renderer) {
 
 // 自定义自动链接渲染器 - 处理linkify生成的链接
 md.renderer.rules.autolink_open = function (tokens, idx, options, env, renderer) {
-  const token = tokens[idx]
-  const href = token.attrGet('href')
+  const t = tokens[idx]
+  const href = t.attrGet('href')
 
   // 检查是否是外部链接
   if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
     // 移除href属性，保持其他属性
-    token.attrSet('href', '#')
-    token.attrSet('onclick', 'return false;')
-    token.attrSet('style', 'cursor: default; text-decoration: none;')
-    token.attrSet('title', `外部链接已禁用: ${href}`)
+    t.attrSet('href', '#')
+    t.attrSet('onclick', 'return false;')
+    t.attrSet('style', 'cursor: default; text-decoration: none;')
+    t.attrSet('title', `外部链接已禁用: ${href}`)
   }
 
   return renderer.renderToken(tokens, idx, options)
@@ -322,7 +322,7 @@ onUpdated(() => {
     <div v-else-if="request?.message" class="relative">
       <!-- 主要内容 -->
       <div
-        v-if="request.is_markdown"
+        v-if="request.chalkboard"
         class="markdown-content prose prose-sm max-w-none prose-headings:font-semibold prose-headings:leading-tight prose-h1:!mt-4 prose-h1:!mb-2 prose-h1:!text-lg prose-h1:!font-bold prose-h1:!leading-tight prose-h2:!mt-3 prose-h2:!mb-1.5 prose-h2:!text-base prose-h2:!font-semibold prose-h2:!leading-tight prose-h3:!mt-2.5 prose-h3:!mb-1 prose-h3:!text-sm prose-h3:!font-medium prose-h3:!leading-tight prose-h4:!mt-2 prose-h4:!mb-1 prose-h4:!text-sm prose-h4:!font-medium prose-h4:!leading-tight prose-p:my-1 prose-p:leading-relaxed prose-p:text-sm prose-ul:my-1 prose-ul:text-sm prose-ul:pl-4 prose-ol:my-1 prose-ol:text-sm prose-ol:pl-4 prose-li:my-1 prose-li:text-sm prose-li:leading-relaxed prose-blockquote:my-2 prose-blockquote:text-sm prose-blockquote:pl-4 prose-blockquote:ml-0 prose-blockquote:italic prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-pre:relative prose-pre:border prose-pre:rounded-lg prose-pre:p-4 prose-pre:my-3 prose-pre:overflow-x-auto scrollbar-code prose-code:px-1 prose-code:py-0.5 prose-code:text-xs prose-code:cursor-pointer prose-code:font-mono prose-a:text-primary-500 prose-a:no-underline prose-a:cursor-default [&_a[onclick='return false;']]:opacity-60 [&_a[onclick='return false;']]:cursor-not-allowed" :class="[
           currentTheme === 'light' ? 'prose-slate' : 'prose-invert',
           currentTheme === 'light' ? 'prose-headings:text-gray-900' : 'prose-headings:text-white',

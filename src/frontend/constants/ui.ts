@@ -59,10 +59,12 @@ export const REPLY_CONFIG = {
   defaultPrompt: '请按照最佳实践继续',
 } as const
 
-// MCP 工具常量
+// MCP tool constants
 export const MCP_TOOLS = {
-  zhi: 'zhi',
-  ji: 'ji',
+  cache: 'cache',
+  store: 'store',
+  index: 'index',
+  docs: 'docs',
 } as const
 
 // 字体大小常量

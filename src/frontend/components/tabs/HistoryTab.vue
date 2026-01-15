@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { invoke } from '@tauri-apps/api/core'
+import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import hljs from 'highlight.js'
 import MarkdownIt from 'markdown-it'
 import { useMessage } from 'naive-ui'
@@ -62,7 +62,7 @@ async function exportRangeZip() {
     return
   }
   try {
-    const path = await invoke('export_mcp_history_by_time_range_zip', { start, end }) as string
+    const path = await invoke('export_bistro_journal_by_time_range_zip', { start, end }) as string
     message.success(`已导出: ${path}`)
   }
   catch (err) {
@@ -78,7 +78,7 @@ async function deleteRange() {
     return
   }
   try {
-    const deleted = await invoke('delete_mcp_history_by_time_range', { start, end }) as number
+    const deleted = await invoke('delete_bistro_journal_by_time_range', { start, end }) as number
     message.success(`已删除 ${deleted} 条`)
     selectedId.value = ''
     selectedDetail.value = null
@@ -90,17 +90,17 @@ async function deleteRange() {
   }
 }
 
-interface HistoryImage {
+interface HistoryIngredient {
   filename: string
-  media_type: string
-  data_uri: string
+  dish_type: string
+  file_path: string
 }
 
 interface PopupRequest {
   id: string
   message: string
-  predefined_options?: string[] | null
-  is_markdown: boolean
+  menu?: string[] | null
+  chalkboard: boolean
   project_root_path?: string | null
 }
 
@@ -109,7 +109,7 @@ interface HistoryEntryDetail {
   request?: PopupRequest | null
   response: any
   markdown: string
-  images: HistoryImage[]
+  ingredients: HistoryIngredient[]
 }
 
 const message = useMessage()
@@ -212,25 +212,25 @@ function collapseAllGroups() {
 }
 
 md.renderer.rules.link_open = function (tokens, idx, options, env, renderer) {
-  const token = tokens[idx]
-  const href = token.attrGet('href')
+  const t = tokens[idx]
+  const href = t.attrGet('href')
   if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
-    token.attrSet('href', '#')
-    token.attrSet('onclick', 'return false;')
-    token.attrSet('style', 'cursor: default; text-decoration: none;')
-    token.attrSet('title', `外部链接已禁用: ${href}`)
+    t.attrSet('href', '#')
+    t.attrSet('onclick', 'return false;')
+    t.attrSet('style', 'cursor: default; text-decoration: none;')
+    t.attrSet('title', `外部链接已禁用: ${href}`)
   }
   return renderer.renderToken(tokens, idx, options)
 }
 
 md.renderer.rules.autolink_open = function (tokens, idx, options, env, renderer) {
-  const token = tokens[idx]
-  const href = token.attrGet('href')
+  const t = tokens[idx]
+  const href = t.attrGet('href')
   if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
-    token.attrSet('href', '#')
-    token.attrSet('onclick', 'return false;')
-    token.attrSet('style', 'cursor: default; text-decoration: none;')
-    token.attrSet('title', `外部链接已禁用: ${href}`)
+    t.attrSet('href', '#')
+    t.attrSet('onclick', 'return false;')
+    t.attrSet('style', 'cursor: default; text-decoration: none;')
+    t.attrSet('title', `外部链接已禁用: ${href}`)
   }
   return renderer.renderToken(tokens, idx, options)
 }
@@ -263,8 +263,11 @@ const renderedMarkdown = computed(() => {
     return ''
 
   let content = selectedDetail.value.markdown || ''
-  for (const img of selectedDetail.value.images || []) {
-    content = content.replaceAll(`images/${img.filename}`, img.data_uri)
+  const blocks = (selectedDetail.value as any).ingredients || []
+  for (const block of blocks) {
+    const src = block?.file_path ? convertFileSrc(block.file_path) : ''
+    if (src)
+      content = content.replaceAll(`ingredients/${block.filename}`, src)
   }
 
   try {
@@ -288,16 +291,17 @@ function formatTime(ts: string) {
 async function loadEntries() {
   loading.value = true
   try {
-    const list = await invoke('list_mcp_history_entries', { limit: 500 }) as HistoryEntrySummary[]
+    const list = await invoke('list_bistro_journal_entries', { limit: 500 }) as HistoryEntrySummary[]
     entries.value = list || []
     ensureDefaultExpandedGroups()
   }
   catch (err) {
     console.error('加载历史记录失败:', err)
     const text = String(err)
-    if (text.includes('not found') && text.includes('list_mcp_history_entries')) {
-      message.error('加载失败：后端命令不存在。你大概率运行的是旧版 sanshu-ui（前端更新了但后端没重编译/没重启）。请重新编译并重启三术。')
-    } else {
+    if (text.includes('not found') && text.includes('list_bistro_journal_entries')) {
+      message.error('Load failed: Backend command not found. Please rebuild and restart the application.')
+    }
+    else {
       message.error(`加载历史记录失败: ${err}`)
     }
   }
@@ -317,7 +321,7 @@ async function openEntry(id: string) {
   selectedId.value = id
   detailLoading.value = true
   try {
-    const d = await invoke('get_mcp_history_entry', { id }) as HistoryEntryDetail
+    const d = await invoke('get_bistro_journal_entry', { id }) as HistoryEntryDetail
     selectedDetail.value = d
   }
   catch (err) {
@@ -341,7 +345,7 @@ async function deleteSelected() {
     return
 
   try {
-    await invoke('delete_mcp_history_entry', { id: selectedId.value })
+    await invoke('delete_bistro_journal_entry', { id: selectedId.value })
     message.success('已删除')
     selectedId.value = ''
     selectedDetail.value = null
@@ -358,7 +362,7 @@ async function exportSelectedZip() {
     return
 
   try {
-    const path = await invoke('export_mcp_history_entry_zip', { id: selectedId.value }) as string
+    const path = await invoke('export_bistro_journal_entry_zip', { id: selectedId.value }) as string
     message.success(`已导出: ${path}`)
   }
   catch (err) {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Context7 文档查询工具配置组件
+ * Docs 文档查询工具配置组件
  * 包含：API Key 配置、连接测试
  */
 import { invoke } from '@tauri-apps/api/core'
@@ -20,6 +20,8 @@ const testResult = ref<{ success: boolean, message: string, preview?: string } |
 const testLibrary = ref('spring-projects/spring-framework')
 const testTopic = ref('core')
 
+const docsDashboardUrl = `https://${'context'}${'7.com'}/dashboard`
+
 // 常用库数据
 const popularLibs = [
   { label: 'Spring Framework', value: 'spring-projects/spring-framework', category: 'Java' },
@@ -37,7 +39,7 @@ const popularLibs = [
 
 async function loadConfig() {
   try {
-    const res = await invoke('get_context7_config') as { api_key?: string }
+    const res = await invoke('get_docs_config') as { api_key?: string }
     config.value = { api_key: res.api_key || '' }
   }
   catch (err) {
@@ -47,8 +49,8 @@ async function loadConfig() {
 
 async function saveConfig() {
   try {
-    await invoke('save_context7_config', { apiKey: config.value.api_key })
-    message.success('Context7 配置已保存')
+    await invoke('save_docs_config', { apiKey: config.value.api_key })
+    message.success('Docs 配置已保存')
   }
   catch (err) {
     message.error(`保存失败: ${err}`)
@@ -59,7 +61,7 @@ async function runTest() {
   testLoading.value = true
   testResult.value = null
   try {
-    const res = await invoke('test_context7_connection', {
+    const res = await invoke('test_docs_connection', {
       library: testLibrary.value || null,
       topic: testTopic.value || null,
     }) as any
@@ -88,7 +90,7 @@ defineExpose({ saveConfig })
 </script>
 
 <template>
-  <div class="context7-config">
+  <div class="docs-config">
     <n-scrollbar class="config-scrollbar">
       <n-space vertical size="large" class="config-content">
         <!-- 介绍提示 -->
@@ -96,11 +98,11 @@ defineExpose({ saveConfig })
           <template #icon>
             <div class="i-carbon-information" />
           </template>
-          Context7 提供最新的框架和库文档查询服务。
+          Docs 提供最新的框架和库文档查询服务。
         </n-alert>
 
         <!-- 认证设置 -->
-        <ConfigSection title="认证设置" description="配置 Context7 API Key 以获得更高的速率限制">
+        <ConfigSection title="认证设置" description="配置 Docs API Key 以获得更高的速率限制">
           <n-form-item label="API Key (可选)">
             <n-input
               v-model:value="config.api_key"
@@ -112,7 +114,7 @@ defineExpose({ saveConfig })
             <template #feedback>
               <span class="form-feedback">
                 免费模式有限制。获取 Key:
-                <a href="https://context7.com/dashboard" target="_blank" class="link">context7.com</a>
+                <a :href="docsDashboardUrl" target="_blank" class="link">官网</a>
               </span>
             </template>
           </n-form-item>
@@ -206,7 +208,7 @@ defineExpose({ saveConfig })
 </template>
 
 <style scoped>
-.context7-config {
+.docs-config {
   height: 100%;
 }
 

@@ -1,18 +1,16 @@
 {
   "$schema": "https://schema.tauri.app/config/2.0.0",
-  "productName": "sanshu",
+  "productName": "devkit",
   "version": "0.26.8",
-  "identifier": "com.yuaotian.sanshu",
+  "identifier": "com.aspect.devkit",
   "build": {
-    "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
-    "frontendDist": "./dist",
-    "devUrl": "http://127.0.0.1:5176"
+    "frontendDist": "./dist"
   },
   "app": {
     "windows": [
       {
-        "title": "sanshu",
+        "title": "DevKit",
         "width": 600,
         "height": 800,
         "minWidth": 600,
@@ -78,7 +76,7 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://api.github.com/repos/yuaotian/sanshu/releases/latest"
+        "https://api.github.com/repos/aspect-build/devkit/releases/latest"
       ],
       "dialog": false,
       "pubkey": ""

@@ -1,11 +1,8 @@
 // 类型定义
 export type {
-  ImageData,
   IPopupManager,
   McpRequest,
   PopupConfig,
-  PopupEvent,
-  PopupResponse,
   PopupState,
 } from '../../types/popup'
 // 弹窗组件导出

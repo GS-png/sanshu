@@ -55,7 +55,7 @@ const statusText = computed(() => {
   }
 
   // 根据请求类型显示不同的提示
-  if (props.request?.predefined_options) {
+  if (props.request?.menu) {
     return '选择选项或输入文本'
   }
   return '请输入内容'

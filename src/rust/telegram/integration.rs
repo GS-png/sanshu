@@ -45,8 +45,8 @@ impl TelegramIntegration {
     pub async fn send_mcp_request(
         &mut self,
         message: &str,
-        predefined_options: Vec<String>,
-        is_markdown: bool,
+        menu: Vec<String>,
+        chalkboard: bool,
         continue_reply_enabled: bool,
     ) -> Result<()> {
         // 初始化选中选项状态
@@ -57,7 +57,7 @@ impl TelegramIntegration {
 
         // 发送选项消息
         self.core
-            .send_options_message(message, &predefined_options, is_markdown)
+            .send_options_message(message, &menu, chalkboard)
             .await?;
 
         // 发送操作消息

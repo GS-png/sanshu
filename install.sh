@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 三术 MCP 工具 - 最简化安装脚本
+# DevKit MCP 工具 - 最简化安装脚本
 # 只需构建两个CLI工具即可运行MCP
 
 set -e
 
-echo "🚀 安装 三术 MCP 工具..."
+echo "🚀 安装 DevKit MCP 工具..."
 
 # 检查必要工具
 for cmd in cargo pnpm; do
@@ -22,10 +22,10 @@ if ! cargo tauri --version >/dev/null 2>&1; then
 fi
 
 cargo tauri build --no-bundle
-cargo build --release --bin sanshu-mcp
+cargo build --release --bin devkit-mcp
 
 # 检查构建结果
-if [[ ! -f "target/release/sanshu-ui" ]] || [[ ! -f "target/release/sanshu-mcp" ]]; then
+if [[ ! -f "target/release/devkit-ui" ]] || [[ ! -f "target/release/devkit-mcp" ]]; then
     echo "❌ 构建失败"
     exit 1
 fi
@@ -34,9 +34,9 @@ fi
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
 
-cp "target/release/sanshu-ui" "$BIN_DIR/sanshu-ui"
-cp "target/release/sanshu-mcp" "$BIN_DIR/sanshu-mcp"
-chmod +x "$BIN_DIR/sanshu-ui" "$BIN_DIR/sanshu-mcp"
+cp "target/release/devkit-ui" "$BIN_DIR/devkit-ui"
+cp "target/release/devkit-mcp" "$BIN_DIR/devkit-mcp"
+chmod +x "$BIN_DIR/devkit-ui" "$BIN_DIR/devkit-mcp"
 
 echo "✅ 安装完成！CLI 工具已安装到 $BIN_DIR"
 
@@ -50,8 +50,8 @@ fi
 
 echo ""
 echo "📋 使用方法："
-echo "  sanshu-mcp  - 启动 MCP 服务器"
-echo "  sanshu-ui   - 启动弹窗界面"
+echo "  devkit-mcp  - 启动 MCP 服务器"
+echo "  devkit-ui   - 启动弹窗界面"
 echo ""
 echo "📝 MCP 客户端配置："
-echo '{"mcpServers": {"sanshu": {"command": "sanshu-mcp"}}}'
+echo '{"mcpServers": {"devkit": {"command": "devkit-mcp"}}}'

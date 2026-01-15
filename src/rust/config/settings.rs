@@ -118,18 +118,17 @@ pub struct McpConfig {
     pub acemcp_exclude_patterns: Option<Vec<String>>, // acemcp排除模式
     pub acemcp_watch_debounce_ms: Option<u64>, // 文件监听防抖延迟（毫秒），默认 180000 (3分钟)
     pub acemcp_auto_index_enabled: Option<bool>, // 全局自动索引开关（默认启用）
-    // Sou 代理配置
+    // Index 代理配置
     pub acemcp_proxy_enabled: Option<bool>, // 代理启用开关
     pub acemcp_proxy_host: Option<String>, // 代理主机地址
     pub acemcp_proxy_port: Option<u16>, // 代理端口
     pub acemcp_proxy_type: Option<String>, // 代理类型: "http" | "https" | "socks5"
     pub acemcp_proxy_username: Option<String>, // 代理用户名（可选）
     pub acemcp_proxy_password: Option<String>, // 代理密码（可选）
-    pub context7_api_key: Option<String>, // Context7 API密钥 (可选，免费使用时可为空)
+    pub docs_api_key: Option<String>, // Docs API密钥 (可选，免费使用时可为空)
     #[serde(default = "default_interaction_wait_ms")]
     pub interaction_wait_ms: u64, // 单次等待阈值（毫秒），0 表示无限等待
 }
-
 
 // 自定义prompt结构
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -303,7 +302,7 @@ pub fn default_mcp_config() -> McpConfig {
         acemcp_proxy_type: None,
         acemcp_proxy_username: None,
         acemcp_proxy_password: None,
-        context7_api_key: None,
+        docs_api_key: None,
         interaction_wait_ms: default_interaction_wait_ms(),
     }
 }
@@ -403,10 +402,10 @@ pub fn default_continue_prompt() -> String {
 
 pub fn default_mcp_tools() -> HashMap<String, bool> {
     let mut tools = HashMap::new();
-    tools.insert(mcp::TOOL_ZHI.to_string(), true); // prompt工具默认启用（核心工具，不可禁用）
-    tools.insert(mcp::TOOL_JI.to_string(), true); // 记忆管理工具默认启用（核心功能，不依赖外部配置，开箱即用）
-    tools.insert(mcp::TOOL_SOU.to_string(), false); // 代码搜索工具默认关闭（依赖第三方 acemcp 服务，需要用户配置 token 和 URL）
-    tools.insert(mcp::TOOL_CONTEXT7.to_string(), true); // Context7 文档查询工具默认启用（支持免费使用，无需配置即可使用）
+    tools.insert(mcp::TOOL_CACHE.to_string(), true);
+    tools.insert(mcp::TOOL_STORE.to_string(), true);
+    tools.insert(mcp::TOOL_INDEX.to_string(), false);
+    tools.insert(mcp::TOOL_DOCS.to_string(), true);
     tools
 }
 
@@ -569,7 +568,7 @@ pub fn default_custom_prompts() -> Vec<CustomPrompt> {
             id: "default_4".to_string(),
             name: "🧠Remember".to_string(),
             content: "请记住，".to_string(),
-            description: Some("三术的另一个工具，请记住".to_string()),
+            description: Some("Store tool - remember command".to_string()),
             sort_order: 4,
             created_at: chrono::Utc::now().to_rfc3339(),
             updated_at: chrono::Utc::now().to_rfc3339(),
@@ -596,7 +595,7 @@ pub fn default_custom_prompts() -> Vec<CustomPrompt> {
         CustomPrompt {
             id: "default_6".to_string(),
             name: "🔍Review And Plan".to_string(),
-            content: "请执行以下项目进度检查和规划任务：\n\n1. **项目进度分析**：\n   - 查看当前代码库状态，分析已完成的功能模块\n   - 识别已完成、进行中和待开始的功能点\n\n2. **里程碑确定**：\n   - 基于当前进度和剩余工作量，定义清晰的里程碑节点\n   - 为每个里程碑设定具体的完成标准和时间预期\n   - 优先考虑核心任务管理功能的里程碑\n\n3. **文档更新**（注意：仅更新现有文档，不创建新文档）：\n   - 更新项目规划文档中的进度状态\n   - 修正任何与实际实现不符的技术方案描述\n   - 确保文档反映当前的技术栈和架构决策\n\n4. **下一步工作规划**：\n   - 基于用户偏好（系统化开发方法、前端优先、分步骤反馈）制定具体的下一阶段工作计划\n   - 识别关键路径上的阻塞点和依赖关系\n   - 提供3-5个具体的下一步行动项，按优先级排序\n\n5. **反馈收集**：\n   - 在完成分析后，使用三术工具收集用户对进度评估和下一步计划的反馈\n   - 提供多个可选的发展方向供用户选择".to_string(),
+            content: "请执行以下项目进度检查和规划任务：\n\n1. **项目进度分析**：\n   - 查看当前代码库状态，分析已完成的功能模块\n   - 识别已完成、进行中和待开始的功能点\n\n2. **里程碑确定**：\n   - 基于当前进度和剩余工作量，定义清晰的里程碑节点\n   - 为每个里程碑设定具体的完成标准和时间预期\n   - 优先考虑核心任务管理功能的里程碑\n\n3. **文档更新**（注意：仅更新现有文档，不创建新文档）：\n   - 更新项目规划文档中的进度状态\n   - 修正任何与实际实现不符的技术方案描述\n   - 确保文档反映当前的技术栈和架构决策\n\n4. **下一步工作规划**：\n   - 基于用户偏好（系统化开发方法、前端优先、分步骤反馈）制定具体的下一阶段工作计划\n   - 识别关键路径上的阻塞点和依赖关系\n   - 提供3-5个具体的下一步行动项，按优先级排序\n\n5. **反馈收集**：\n   - After analysis, use the cache tool to collect feedback on progress and next steps\n   - 提供多个可选的发展方向供用户选择".to_string(),
             description: Some("项目进度检查和规划任务".to_string()),
             sort_order: 6,
             created_at: chrono::Utc::now().to_rfc3339(),

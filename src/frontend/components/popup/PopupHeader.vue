@@ -6,7 +6,7 @@ interface Props {
   loading?: boolean
   showMainLayout?: boolean
   alwaysOnTop?: boolean
-  /** 是否启用了 sou 代码搜索工具，用于控制 MCP 索引状态指示器的显示 */
+  /** 是否启用了 index 代码索引工具，用于控制 MCP 索引状态指示器的显示 */
   mcpEnabled?: boolean
   /** 当前项目的索引状态摘要文本（例如：已同步 / 索引中 xx%） */
   mcpStatusSummary?: string
@@ -61,7 +61,7 @@ function handleToggleAlwaysOnTop() {
 }
 
 function handleOpenIndexStatus() {
-  // 仅在 sou 工具启用且存在有效状态时响应点击
+  // 仅在 index 工具启用且存在有效状态时响应点击
   if (!props.mcpEnabled)
     return
   emit('openIndexStatus')
@@ -75,13 +75,13 @@ function handleOpenIndexStatus() {
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-3 h-3 rounded-full bg-primary-500" />
         <h1 class="text-base font-medium text-white truncate">
-          三术 - 道生一，一生二，二生三，三生万物
+          DevKit - Development Toolkit
         </h1>
       </div>
 
       <!-- 右侧：MCP 索引状态指示器 + 操作按钮 -->
       <div class="flex items-center gap-3">
-        <!-- MCP 代码索引状态指示器（仅在 sou 工具启用且有项目索引状态时显示） -->
+        <!-- MCP 代码索引状态指示器（仅在 index 工具启用且有项目索引状态时显示） -->
         <n-tooltip
           v-if="mcpEnabled && mcpStatusSummary"
           trigger="hover"

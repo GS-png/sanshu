@@ -4,6 +4,7 @@ use crate::app::{setup::setup_application, commands::*};
 use crate::log_important;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::time::Duration;
 use tauri::Builder;
 
 /// 构建Tauri应用
@@ -66,17 +67,18 @@ pub fn build_tauri_app() -> Builder<tauri::Wry> {
             reset_mcp_tools_config,
             get_interaction_wait_ms,
             set_interaction_wait_ms,
-            list_mcp_history_entries,
-            get_mcp_history_entry,
-            delete_mcp_history_entry,
-            delete_mcp_history_by_time_range,
-            export_mcp_history_entry_zip,
-            export_mcp_history_by_time_range_zip,
+            list_bistro_journal_entries,
+            get_bistro_journal_entry,
+            delete_bistro_journal_entry,
+            delete_bistro_journal_by_time_range,
+            export_bistro_journal_entry_zip,
+            export_bistro_journal_by_time_range_zip,
             send_mcp_response,
             get_cli_args,
             read_mcp_request,
-            select_image_files,
-            build_mcp_send_response,
+            stash_ingredient_bytes_cmd,
+            discard_spice_cmd,
+            read_clipboard_ingredients_cached,
             build_mcp_continue_response,
             create_test_popup,
             
@@ -105,10 +107,10 @@ pub fn build_tauri_app() -> Builder<tauri::Wry> {
             crate::mcp::tools::acemcp::commands::detect_acemcp_proxy,
             crate::mcp::tools::acemcp::commands::test_acemcp_proxy_speed,
 
-            // context7命令（迁移至 tools::context7::commands）
-            crate::mcp::tools::context7::commands::test_context7_connection,
-            crate::mcp::tools::context7::commands::get_context7_config,
-            crate::mcp::tools::context7::commands::save_context7_config,
+            // docs命令（迁移至 tools::docs::commands）
+            crate::mcp::tools::docs::commands::test_docs_connection,
+            crate::mcp::tools::docs::commands::get_docs_config,
+            crate::mcp::tools::docs::commands::save_docs_config,
 
             // 自定义prompt命令
             get_custom_prompt_config,
@@ -162,6 +164,17 @@ pub fn build_tauri_app() -> Builder<tauri::Wry> {
                     log_important!(error, "应用初始化失败: {}", e);
                 }
             });
+
+            match crate::mcp::clean_expired_pantry_items(Duration::from_secs(60 * 60 * 24 * 7)) {
+                Ok(deleted) => {
+                    if deleted > 0 {
+                        log::info!("已清理过期食材: {} 项", deleted);
+                    }
+                }
+                Err(e) => {
+                    log::warn!("清理过期食材失败: {}", e);
+                }
+            }
 
             Ok(())
         })

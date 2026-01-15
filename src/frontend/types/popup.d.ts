@@ -3,8 +3,8 @@
 export interface McpRequest {
   id: string
   message: string
-  predefined_options?: string[]
-  is_markdown?: boolean
+  menu?: string[]
+  chalkboard?: boolean
   project_root_path?: string
 }
 
@@ -64,47 +64,19 @@ export interface ShortcutKey {
 }
 
 // 新的结构化响应格式
-export interface McpResponse {
-  user_input: string | null
-  selected_options: string[]
-  images: ImageAttachment[]
-  metadata: ResponseMetadata
+export interface DishResponse {
+  note: string | null
+  toppings: string[]
+  ingredients: IngredientAttachment[]
+  ticket: KitchenTicket
 }
 
-export interface ImageAttachment {
-  data: string
-  media_type: string
-  filename: string | null
+export type IngredientAttachment = {
+  spice_id: string
 }
 
-export interface ResponseMetadata {
-  timestamp: string | null
-  request_id: string | null
-  source: string | null
+export interface KitchenTicket {
+  cooked_at: string | null
+  ticket_id: string | null
+  station: string | null
 }
-
-// 旧格式兼容性支持
-export interface PopupResponse {
-  type: 'text' | 'image' | 'option'
-  text?: string
-  options?: string[]
-  images?: ImageData[]
-}
-
-export interface ImageData {
-  type: 'image'
-  source: {
-    type: 'base64'
-    media_type: string
-    data: string
-  }
-}
-
-// 事件类型
-export type PopupEvent
-  = | { type: 'show', payload: McpRequest }
-    | { type: 'hide' }
-    | { type: 'submit', payload: PopupResponse }
-    | { type: 'cancel' }
-    | { type: 'theme-change', payload: string }
-    | { type: 'open-main-layout' }

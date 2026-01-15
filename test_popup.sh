@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 三术弹窗测试脚本
+# DevKit 弹窗测试脚本
 # 使用 target/release 中的 CLI 工具测试弹窗功能
 
 set -e
@@ -20,7 +20,7 @@ BUILD_TYPE="release"
 CLI_TYPE="local"  # local 或 global
 CLI_PATH="$PROJECT_ROOT/target/$BUILD_TYPE"
 
-echo -e "${BLUE}🎯 三术弹窗测试脚本${NC}"
+echo -e "${BLUE}🎯 DevKit 弹窗测试脚本${NC}"
 echo -e "${BLUE}================================${NC}"
 
 # 选择CLI类型
@@ -91,26 +91,26 @@ select_build_type() {
 check_global_cli() {
     echo -e "${YELLOW}🔍 检查全局CLI工具...${NC}"
 
-    local sanshu_found=false
-    local dengxiaxia_found=false
+    local devkit_mcp_found=false
+    local devkit_ui_found=false
 
-    # 检查 sanshu-mcp
-    if command -v sanshu-mcp &> /dev/null; then
-        echo -e "${GREEN}✅ 找到全局 sanshu-mcp CLI: $(which sanshu-mcp)${NC}"
-        sanshu_found=true
+    # 检查 devkit-mcp
+    if command -v devkit-mcp &> /dev/null; then
+        echo -e "${GREEN}✅ 找到全局 devkit-mcp CLI: $(which devkit-mcp)${NC}"
+        devkit_mcp_found=true
     else
-        echo -e "${RED}❌ 未找到全局 sanshu-mcp CLI${NC}"
+        echo -e "${RED}❌ 未找到全局 devkit-mcp CLI${NC}"
     fi
 
-    # 检查 sanshu-ui
-    if command -v sanshu-ui &> /dev/null; then
-        echo -e "${GREEN}✅ 找到全局 sanshu-ui CLI: $(which sanshu-ui)${NC}"
-        dengxiaxia_found=true
+    # 检查 devkit-ui
+    if command -v devkit-ui &> /dev/null; then
+        echo -e "${GREEN}✅ 找到全局 devkit-ui CLI: $(which devkit-ui)${NC}"
+        devkit_ui_found=true
     else
-        echo -e "${RED}❌ 未找到全局 sanshu-ui CLI${NC}"
+        echo -e "${RED}❌ 未找到全局 devkit-ui CLI${NC}"
     fi
 
-    if [[ "$sanshu_found" == false || "$dengxiaxia_found" == false ]]; then
+    if [[ "$devkit_mcp_found" == false || "$devkit_ui_found" == false ]]; then
         echo -e "${YELLOW}💡 全局CLI工具未完全安装，安装方法:${NC}"
         echo -e "${BLUE}   cargo install --path . --bins${NC}"
         echo -e "${YELLOW}   或者选择使用本地编译版本${NC}"
@@ -188,8 +188,8 @@ check_cli_tools() {
 
     echo -e "${YELLOW}📋 检查本地CLI工具 (${BUILD_TYPE})...${NC}"
 
-    if [[ ! -f "$CLI_PATH/sanshu-mcp" ]]; then
-        echo -e "${RED}❌ 未找到 sanshu-mcp CLI工具${NC}"
+    if [[ ! -f "$CLI_PATH/devkit-mcp" ]]; then
+        echo -e "${RED}❌ 未找到 devkit-mcp CLI工具${NC}"
         if [[ "$BUILD_TYPE" == "release" ]]; then
             echo -e "${YELLOW}💡 请先编译项目: cargo build --release${NC}"
         else
@@ -206,8 +206,8 @@ check_cli_tools() {
         fi
     fi
 
-    if [[ ! -f "$CLI_PATH/sanshu-ui" ]]; then
-        echo -e "${RED}❌ 未找到 sanshu-ui CLI工具${NC}"
+    if [[ ! -f "$CLI_PATH/devkit-ui" ]]; then
+        echo -e "${RED}❌ 未找到 devkit-ui CLI工具${NC}"
         if [[ "$BUILD_TYPE" == "release" ]]; then
             echo -e "${YELLOW}💡 请先编译项目: cargo build --release${NC}"
         else
@@ -225,20 +225,20 @@ check_cli_tools() {
     fi
 
     # 检查执行权限
-    if [[ ! -x "$CLI_PATH/sanshu-mcp" ]]; then
-        echo -e "${YELLOW}⚠️  sanshu-mcp CLI工具没有执行权限，正在添加...${NC}"
-        chmod +x "$CLI_PATH/sanshu-mcp"
+    if [[ ! -x "$CLI_PATH/devkit-mcp" ]]; then
+        echo -e "${YELLOW}⚠️  devkit-mcp CLI工具没有执行权限，正在添加...${NC}"
+        chmod +x "$CLI_PATH/devkit-mcp"
     fi
 
-    if [[ ! -x "$CLI_PATH/sanshu-ui" ]]; then
-        echo -e "${YELLOW}⚠️  sanshu-ui CLI工具没有执行权限，正在添加...${NC}"
-        chmod +x "$CLI_PATH/sanshu-ui"
+    if [[ ! -x "$CLI_PATH/devkit-ui" ]]; then
+        echo -e "${YELLOW}⚠️  devkit-ui CLI工具没有执行权限，正在添加...${NC}"
+        chmod +x "$CLI_PATH/devkit-ui"
     fi
 
     echo -e "${GREEN}✅ 本地CLI工具检查完成 (${BUILD_TYPE})${NC}"
     echo -e "   构建类型: ${BUILD_TYPE}"
-    echo -e "   sanshu-mcp: $CLI_PATH/sanshu-mcp"
-    echo -e "   sanshu-ui: $CLI_PATH/sanshu-ui"
+    echo -e "   devkit-mcp: $CLI_PATH/devkit-mcp"
+    echo -e "   devkit-ui: $CLI_PATH/devkit-ui"
 }
 
 # 检查测试JSON文件
@@ -310,7 +310,7 @@ test_simple_popup() {
     echo ""
 
     # 启动弹窗
-    local cli_cmd=$(get_cli_command "sanshu-ui")
+    local cli_cmd=$(get_cli_command "devkit-ui")
     echo -e "${GREEN}🎯 启动弹窗...${NC}"
     echo -e "${BLUE}执行命令: $cli_cmd --mcp-request test_simple_popup.json${NC}"
     if $cli_cmd --mcp-request "$PROJECT_ROOT/test_simple_popup.json"; then
@@ -332,7 +332,7 @@ test_markdown_popup() {
     echo ""
 
     # 启动弹窗
-    local cli_cmd=$(get_cli_command "sanshu-ui")
+    local cli_cmd=$(get_cli_command "devkit-ui")
     echo -e "${GREEN}🎯 启动弹窗...${NC}"
     echo -e "${BLUE}执行命令: $cli_cmd --mcp-request test_markdown_popup.json${NC}"
     if $cli_cmd --mcp-request "$PROJECT_ROOT/test_markdown_popup.json"; then
@@ -353,17 +353,17 @@ test_custom_popup() {
     cat > "$TEMP_FILE" << 'EOF'
 {
   "id": "custom-test-001",
-  "message": "# 🎨 自定义弹窗测试\n\n这是一个自定义的弹窗测试，用于验证弹窗功能的完整性。\n\n## ✨ 测试功能\n- 头部固定显示\n- 工具栏固定显示\n- 图片组件渲染\n- 输入框组件\n- 禁止选中非内容区域\n- Markdown紧凑渲染\n\n## 🔧 操作说明\n1. 测试主题切换按钮\n2. 测试打开主界面按钮\n3. 测试预定义选项选择\n4. 测试文本输入功能\n5. 测试图片粘贴功能\n\n```typescript\n// 示例代码\ninterface PopupTest {\n  header: 'fixed'\n  toolbar: 'fixed'\n  content: 'scrollable'\n  images: 'component-rendered'\n  input: 'component-based'\n}\n```\n\n> **注意**: 请测试所有交互功能以确保弹窗工作正常。",
-  "predefined_options": [
+  "message": "# 🎨 自定义弹窗测试\n\n这是一个自定义的弹窗测试，用于验证弹窗功能的完整性。\n\n## ✨ 测试功能\n- 头部固定显示\n- 工具栏固定显示\n- 食材组件渲染\n- 输入框组件\n- 禁止选中非内容区域\n- Markdown紧凑渲染\n\n## 🔧 操作说明\n1. 测试主题切换按钮\n2. 测试打开主界面按钮\n3. 测试菜单选项选择\n4. 测试文本输入功能\n5. 测试食材粘贴功能\n\n```typescript\n// 示例代码\ninterface PopupTest {\n  header: 'fixed'\n  toolbar: 'fixed'\n  content: 'scrollable'\n  ingredients: 'component-rendered'\n  input: 'component-based'\n}\n```\n\n> **注意**: 请测试所有交互功能以确保弹窗工作正常。",
+  "menu": [
     "🎨 测试主题切换",
     "🏠 测试主界面按钮", 
     "📝 测试文本输入",
-    "🖼️ 测试图片功能",
+    "🖼️ 测试食材",
     "⚡ 测试快捷键",
     "✅ 测试完成",
     "❌ 发现问题"
   ],
-  "is_markdown": true
+  "chalkboard": true
 }
 EOF
     
@@ -372,7 +372,7 @@ EOF
     echo ""
     
     # 启动弹窗
-    local cli_cmd=$(get_cli_command "sanshu-ui")
+    local cli_cmd=$(get_cli_command "devkit-ui")
     echo -e "${GREEN}🎯 启动自定义弹窗...${NC}"
     echo -e "${BLUE}执行命令: $cli_cmd --mcp-request $TEMP_FILE${NC}"
     if $cli_cmd --mcp-request "$TEMP_FILE"; then
@@ -415,27 +415,27 @@ show_cli_help() {
     echo -e "${YELLOW}📖 CLI工具帮助信息:${NC}"
     echo ""
 
-    local sanshu_cmd=$(get_cli_command "sanshu-mcp")
-    local dengxiaxia_cmd=$(get_cli_command "sanshu-ui")
+    local devkit_mcp_cmd=$(get_cli_command "devkit-mcp")
+    local devkit_ui_cmd=$(get_cli_command "devkit-ui")
 
-    echo -e "${BLUE}sanshu-mcp CLI:${NC}"
-    echo -e "${BLUE}命令: $sanshu_cmd${NC}"
-    if $sanshu_cmd --help 2>/dev/null; then
+    echo -e "${BLUE}devkit-mcp CLI:${NC}"
+    echo -e "${BLUE}命令: $devkit_mcp_cmd${NC}"
+    if $devkit_mcp_cmd --help 2>/dev/null; then
         echo -e "${GREEN}✅ 帮助信息显示完成${NC}"
     else
-        echo -e "${YELLOW}⚠️  sanshu-mcp CLI 无帮助信息或不支持 --help 参数${NC}"
-        echo -e "${BLUE}尝试直接运行:${NC} $sanshu_cmd"
+        echo -e "${YELLOW}⚠️  devkit-mcp CLI 无帮助信息或不支持 --help 参数${NC}"
+        echo -e "${BLUE}尝试直接运行:${NC} $devkit_mcp_cmd"
     fi
     echo ""
 
-    echo -e "${BLUE}sanshu-ui CLI:${NC}"
-    echo -e "${BLUE}命令: $dengxiaxia_cmd${NC}"
-    if $dengxiaxia_cmd --help 2>/dev/null; then
+    echo -e "${BLUE}devkit-ui CLI:${NC}"
+    echo -e "${BLUE}命令: $devkit_ui_cmd${NC}"
+    if $devkit_ui_cmd --help 2>/dev/null; then
         echo -e "${GREEN}✅ 帮助信息显示完成${NC}"
     else
-        echo -e "${YELLOW}⚠️  sanshu-ui CLI 无帮助信息或不支持 --help 参数${NC}"
-        echo -e "${BLUE}尝试直接运行:${NC} $dengxiaxia_cmd"
-        echo -e "${BLUE}MCP请求参数:${NC} $dengxiaxia_cmd --mcp-request <json_file>"
+        echo -e "${YELLOW}⚠️  devkit-ui CLI 无帮助信息或不支持 --help 参数${NC}"
+        echo -e "${BLUE}尝试直接运行:${NC} $devkit_ui_cmd"
+        echo -e "${BLUE}MCP请求参数:${NC} $devkit_ui_cmd --mcp-request <json_file>"
     fi
 }
 

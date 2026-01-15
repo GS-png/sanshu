@@ -1,4 +1,4 @@
-# 三术 MCP 工具安装指南
+# DevKit MCP Installation Guide
 
 ## 快速安装
 
@@ -6,8 +6,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yuaotian/sanshu.git
-cd sanshu
+git clone https://github.com/aspect-build/devkit.git
+cd devkit
 
 # 运行安装脚本
 chmod +x install.sh
@@ -16,11 +16,11 @@ chmod +x install.sh
 
 ### 方式二：下载预编译版本
 
-从 [Releases](https://github.com/yuaotian/sanshu/releases) 页面下载对应平台的预编译版本：
+从 [Releases](https://github.com/aspect-build/devkit/releases) 页面下载对应平台的预编译版本：
 
-- **Linux**: `sanshu-cli-v{version}-linux-x86_64.tar.gz`
-- **macOS**: `sanshu-cli-v{version}-macos-aarch64.tar.gz` / `sanshu-cli-v{version}-macos-x86_64.tar.gz`
-- **Windows**: `sanshu-cli-v{version}-windows-x86_64.zip`
+- **Linux**: `devkit-cli-v{version}-linux-x86_64.tar.gz`
+- **macOS**: `devkit-cli-v{version}-macos-aarch64.tar.gz` / `devkit-cli-v{version}-macos-x86_64.tar.gz`
+- **Windows**: `devkit-cli-v{version}-windows-x86_64.zip`
 
 #### 安装步骤：
 
@@ -30,22 +30,22 @@ chmod +x install.sh
 
 ```bash
 # Linux/macOS 示例
-tar -xzf sanshu-cli-v{version}-linux-x86_64.tar.gz
-sudo cp sanshu-ui sanshu-mcp /usr/local/bin/
+tar -xzf devkit-cli-v{version}-linux-x86_64.tar.gz
+sudo cp devkit-ui devkit-mcp /usr/local/bin/
 ```
 
 ```powershell
 # Windows 示例
-# 解压 zip 文件到 C:\sanshu
-# 将 C:\sanshu 添加到系统 PATH
+# Extract zip to C:\devkit
+# Add C:\devkit to system PATH
 ```
 
 ## 验证安装
 
 ```bash
 # 检查工具是否正确安装
-sanshu-mcp --help
-sanshu-ui --help
+devkit-mcp --help
+devkit-ui --help
 ```
 
 ## MCP 客户端配置
@@ -55,8 +55,8 @@ sanshu-ui --help
 ```json
 {
   "mcpServers": {
-    "sanshu": {
-      "command": "sanshu-mcp"
+    "devkit": {
+      "command": "devkit-mcp"
     }
   }
 }
@@ -66,19 +66,19 @@ sanshu-ui --help
 
 ### MCP 服务器模式
 ```bash
-sanshu-mcp  # 启动 MCP 服务器
+devkit-mcp  # 启动 MCP 服务器
 ```
 
 ### 弹窗界面模式
 ```bash
-sanshu-ui                          # 启动设置界面
-sanshu-ui --mcp-request file       # MCP 弹窗模式
+devkit-ui                          # 启动设置界面
+devkit-ui --mcp-request file       # MCP 弹窗模式
 ```
 
 ## 工具说明
 
-- **sanshu-mcp**: MCP 服务器，提供记忆管理和智能交互功能
-- **sanshu-ui**: 弹窗界面，用于用户交互和设置
+- **devkit-mcp**: MCP server for cache and store tools
+- **devkit-ui**: UI for user interaction and settings
 
 ## 系统要求
 
@@ -91,7 +91,7 @@ sanshu-ui --mcp-request file       # MCP 弹窗模式
 ### 权限问题
 ```bash
 # Linux/macOS
-chmod +x sanshu-ui sanshu-mcp
+chmod +x devkit-ui devkit-mcp
 ```
 
 ### PATH 问题
@@ -115,7 +115,7 @@ pnpm build
 cargo build --release
 
 # 安装
-cp target/release/sanshu-ui target/release/sanshu-mcp ~/.local/bin/
+cp target/release/devkit-ui target/release/devkit-mcp ~/.local/bin/
 ```
 
 ## 更新

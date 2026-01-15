@@ -48,7 +48,7 @@ interface UpdateProgress {
 }
 
 // 持久化存储的键名
-const CANCELLED_VERSIONS_KEY = 'sanshu_cancelled_versions'
+const CANCELLED_VERSIONS_KEY = 'devkit_cancelled_versions'
 
 // 加载已取消的版本
 function loadCancelledVersions(): Set<string> {
@@ -144,7 +144,7 @@ function mapUpdateInfoToVersionInfo(updateInfo: UpdateInfo): VersionInfo {
 // 默认情况下优先走 Tauri 后端（带代理/网络检测），只有在后端不可用时才会调用本函数
 async function checkLatestVersionViaGithub(): Promise<VersionInfo | null> {
   try {
-    const response = await fetch('https://api.github.com/repos/yuaotian/sanshu/releases/latest', {
+    const response = await fetch('https://api.github.com/repos/aspect-build/devkit/releases/latest', {
       headers: {
         Accept: 'application/vnd.github.v3+json',
       },
@@ -297,7 +297,7 @@ async function safeOpenUrl(url: string): Promise<void> {
 
 // 打开下载页面
 async function openDownloadPage(): Promise<void> {
-  await safeOpenUrl('https://github.com/yuaotian/sanshu/releases/latest')
+  await safeOpenUrl('https://github.com/aspect-build/devkit/releases/latest')
 }
 
 // 打开发布页面

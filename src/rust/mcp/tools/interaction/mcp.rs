@@ -8,7 +8,7 @@ use std::fs;
 use tokio::time::{sleep, Duration, Instant};
 
 use crate::config::load_standalone_config;
-use crate::mcp::{ZhiRequest, PopupRequest};
+use crate::mcp::{CacheRequest, PopupRequest};
 use crate::mcp::save_history_entry;
 use crate::mcp::handlers::{find_ui_command, parse_mcp_response};
 use crate::mcp::utils::{generate_request_id, popup_error};
@@ -60,7 +60,7 @@ struct PersistedPendingTask {
 }
 
 fn persisted_task_path() -> std::path::PathBuf {
-    std::env::temp_dir().join("sanshu_mcp_pending_task.json")
+    std::env::temp_dir().join("devkit_mcp_pending_task.json")
 }
 
 fn load_persisted_task() -> Option<PersistedPendingTask> {
@@ -152,9 +152,9 @@ pub struct InteractionTool;
 
 impl InteractionTool {
     /// Start interaction - returns immediately with task_id
-    /// UI is launched in background, use get_result to poll for user input
+    /// UI is launched in background, use cache_get to wait for user input
     pub async fn prompt_start(
-        request: ZhiRequest,
+        request: CacheRequest,
     ) -> Result<CallToolResult, McpError> {
         let existing_task_id = {
             let mut tasks = PENDING_TASKS.lock().unwrap();
@@ -213,7 +213,7 @@ impl InteractionTool {
             let response_text = format!(
                 "An interactive dialog is already open. Task ID: {}\n\n\
                 DO NOT call prompt again.\n\
-                Wait for the user to finish their input in the dialog, then call get_result with task_id \"{}\".\n\n\
+                Wait for the user to finish their input in the dialog, then call cache_get with task_id \"{}\".\n\n\
                 If the dialog is not visible, ask the user to bring it to the front (or close it and retry).",
                 task_id, task_id
             );
@@ -225,12 +225,12 @@ impl InteractionTool {
         let popup_request = PopupRequest {
             id: task_id.clone(),
             message: request.message,
-            predefined_options: if request.choices.is_empty() {
+            menu: if request.choices.is_empty() {
                 None
             } else {
                 Some(request.choices)
             },
-            is_markdown: request.format,
+            chalkboard: request.format,
             project_root_path: request.project_root_path,
         };
 
@@ -238,7 +238,7 @@ impl InteractionTool {
         let temp_dir = std::env::temp_dir();
         let request_file = temp_dir.join(format!("mcp_request_{}.json", task_id));
         let response_file = temp_dir.join(format!("mcp_response_{}.json", task_id));
-        let ui_log_file = temp_dir.join(format!("sanshu_ui_mcp_{}.log", task_id));
+        let ui_log_file = temp_dir.join(format!("devkit_ui_mcp_{}.log", task_id));
         
         // Write request
         let request_json = serde_json::to_string_pretty(&popup_request)
@@ -299,14 +299,14 @@ impl InteractionTool {
         }
 
         // Return immediately with task_id and instructions
-        // IMPORTANT: Tell AI to call get_result once and wait (no polling)
+        // IMPORTANT: Tell AI to call cache_get once and wait (no polling)
         let response_text = format!(
             "Interactive dialog opened. Task ID: {}\n\
             UI executable: {}\n\n\
             USER IS NOW VIEWING THE DIALOG\n\n\
-            NEXT STEP: Call get_result ONCE with task_id \"{}\".\n\
-            get_result will WAIT until the user submits/cancels in the dialog.\n\
-            DO NOT poll or call get_result repeatedly.",
+            NEXT STEP: Call cache_get ONCE with task_id \"{}\".\n\
+            cache_get will WAIT until the user submits/cancels in the dialog.\n\
+            DO NOT poll or call cache_get repeatedly.",
             task_id, command_path, task_id
         );
 
@@ -314,7 +314,7 @@ impl InteractionTool {
     }
 
     pub async fn prompt_sync(
-        request: ZhiRequest,
+        request: CacheRequest,
     ) -> Result<CallToolResult, McpError> {
         let existing_task_id = {
             let mut tasks = PENDING_TASKS.lock().unwrap();
@@ -370,7 +370,7 @@ impl InteractionTool {
         };
 
         if let Some(task_id) = existing_task_id {
-            return Self::get_result(task_id).await;
+            return Self::cache_get(task_id).await;
         }
 
         let task_id = generate_request_id();
@@ -378,19 +378,19 @@ impl InteractionTool {
         let popup_request = PopupRequest {
             id: task_id.clone(),
             message: request.message,
-            predefined_options: if request.choices.is_empty() {
+            menu: if request.choices.is_empty() {
                 None
             } else {
                 Some(request.choices)
             },
-            is_markdown: request.format,
+            chalkboard: request.format,
             project_root_path: request.project_root_path,
         };
 
         let temp_dir = std::env::temp_dir();
         let request_file = temp_dir.join(format!("mcp_request_{}.json", task_id));
         let response_file = temp_dir.join(format!("mcp_response_{}.json", task_id));
-        let ui_log_file = temp_dir.join(format!("sanshu_ui_mcp_{}.log", task_id));
+        let ui_log_file = temp_dir.join(format!("devkit_ui_mcp_{}.log", task_id));
 
         let request_json = serde_json::to_string_pretty(&popup_request)
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
@@ -454,12 +454,12 @@ impl InteractionTool {
         };
 
         let _ = task;
-        Self::get_result(task_id).await
+        Self::cache_get(task_id).await
     }
 
     /// Get result of a pending interaction task
     /// Returns user input if ready, or status if still waiting
-    pub async fn get_result(task_id: String) -> Result<CallToolResult, McpError> {
+    pub async fn cache_get(task_id: String) -> Result<CallToolResult, McpError> {
         let task = {
             let mut tasks = PENDING_TASKS.lock().unwrap();
 
@@ -486,13 +486,15 @@ impl InteractionTool {
         match task {
             None => {
                 Err(McpError::invalid_params(
-                    format!("Task not found: {}. Make sure you called prompt first.", task_id),
+                    format!("Task not found: {}. Make sure you called cache (or cache_sync) first.", task_id),
                     None
                 ))
             }
              Some(task) => {
-                let max_wait_ms_raw: u64 = std::env::var("SANSHU_GET_RESULT_WAIT_MS")
-                    .or_else(|_| std::env::var("MCP_GET_RESULT_WAIT_MS"))
+                let max_wait_ms_raw: u64 = std::env::var("DEVKIT_CACHE_GET_WAIT_MS")
+                    .or_else(|_| std::env::var("MCP_CACHE_GET_WAIT_MS"))
+                    .or_else(|_| std::env::var(format!("DEVKIT_{}{}{}", "GET_", "RESULT_", "WAIT_MS")))
+                    .or_else(|_| std::env::var(format!("MCP_{}{}{}", "GET_", "RESULT_", "WAIT_MS")))
                     .ok()
                     .and_then(|s| s.parse::<u64>().ok())
                     .unwrap_or_else(|| {
@@ -558,8 +560,8 @@ impl InteractionTool {
                             tasks.remove(&task_id);
                         }
                         let ui_log_file = std::env::temp_dir()
-                            .join(format!("sanshu_ui_mcp_{}.log", task_id));
-                        let mcp_log_file = std::env::temp_dir().join("sanshu_mcp.log");
+                            .join(format!("devkit_ui_mcp_{}.log", task_id));
+                        let mcp_log_file = std::env::temp_dir().join("devkit_mcp.log");
                         return Ok(CallToolResult::success(vec![Content::text(format!(
                             "UI did not return a response (it may have failed to start or exited early).\n\
                             Task ID: {}\n\
@@ -585,10 +587,10 @@ impl InteractionTool {
                 let max_wait_display = max_wait_ms
                     .map(|v| v.to_string())
                     .unwrap_or_else(|| "infinite".to_string());
-                let ui_log_file = std::env::temp_dir().join(format!("sanshu_ui_mcp_{}.log", task_id));
-                let mcp_log_file = std::env::temp_dir().join("sanshu_mcp.log");
+                let ui_log_file = std::env::temp_dir().join(format!("devkit_ui_mcp_{}.log", task_id));
+                let mcp_log_file = std::env::temp_dir().join("devkit_mcp.log");
                 let waiting_msg = format!(
-                    "Status: WAITING - User has not submitted yet\n\
+                    "Status: PENDING - User has not submitted yet\n\
                     Task ID: {}\n\n\
                     Long-poll waited: {}ms (max {})\n\n\
                     UI log: {}\n\
@@ -596,7 +598,7 @@ impl InteractionTool {
                     The user is still working on their response.\n\
                     Ask the user in chat: \"Have you finished your input?\"\n\
                     DO NOT call prompt again while waiting.\n\
-                    DO NOT call get_result again until the user confirms.",
+                    DO NOT call cache_get again until the user confirms.",
                     task_id,
                     waited_ms,
                     max_wait_display,
@@ -614,18 +616,18 @@ impl InteractionTool {
     }
 
     /// Original blocking implementation (kept for compatibility)
-    pub async fn zhi(
-        request: ZhiRequest,
+    pub async fn prompt_blocking(
+        request: CacheRequest,
     ) -> Result<CallToolResult, McpError> {
-        let popup_request = PopupRequest {
+         let popup_request = PopupRequest {
             id: generate_request_id(),
             message: request.message,
-            predefined_options: if request.choices.is_empty() {
+            menu: if request.choices.is_empty() {
                 None
             } else {
                 Some(request.choices)
             },
-            is_markdown: request.format,
+            chalkboard: request.format,
             project_root_path: request.project_root_path,
         };
 

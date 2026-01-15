@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 代码搜索工具 (Acemcp/Sou) 配置组件
+ * 代码搜索工具 (Acemcp/Index) 配置组件
  * 包含：基础配置、高级配置、日志调试、索引管理
  */
 import { invoke } from '@tauri-apps/api/core'
@@ -9,7 +9,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useAcemcpSync } from '../../composables/useAcemcpSync'
 import ConfigSection from '../common/ConfigSection.vue'
 import ProjectIndexManager from '../settings/ProjectIndexManager.vue'
-import ProxySettingsModal from './SouProxySettingsModal.vue'
+import ProxySettingsModal from './IndexProxySettingsModal.vue'
 
 // Props
 const props = defineProps<{
@@ -462,7 +462,7 @@ defineExpose({ saveConfig })
 </script>
 
 <template>
-  <div class="sou-config">
+  <div class="index-config">
     <n-tabs type="line" animated>
       <!-- 基础配置 -->
       <n-tab-pane name="basic" tab="基础配置">
@@ -611,7 +611,7 @@ defineExpose({ saveConfig })
                 <template #icon>
                   <div class="i-carbon-terminal" />
                 </template>
-                日志路径: <code class="code-inline">~/.sanshu/log/acemcp.log</code>
+                Log path: <code class="code-inline">~/.devkit/log/acemcp.log</code>
               </n-alert>
 
               <n-space class="mt-3">
@@ -932,7 +932,7 @@ defineExpose({ saveConfig })
 </template>
 
 <style scoped>
-.sou-config {
+.index-config {
   height: 100%;
   display: flex;
   flex-direction: column;

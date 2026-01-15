@@ -1,28 +1,23 @@
 {
-  "name": "sanshu",
+  "name": "devkit",
   "type": "module",
   "version": "0.26.8",
   "packageManager": "pnpm@10.25.0",
-  "author": "煎饼果子(86)",
+  "author": "DevKit Team",
   "license": "MIT",
-  "homepage": "https://github.com/yuaotian/sanshu",
+  "homepage": "https://github.com/aspect-build/devkit",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yuaotian/sanshu.git"
+    "url": "https://github.com/aspect-build/devkit.git"
   },
   "bugs": {
-    "url": "https://github.com/yuaotian/sanshu/issues"
+    "url": "https://github.com/aspect-build/devkit/issues"
   },
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
     "lint": "eslint . --fix",
     "tauri": "cargo tauri",
-    "tauri:dev": "cargo tauri dev",
-    "tauri:build": "cargo tauri build",
-    "test:ui": "cd src/frontend/test && vite",
-    "test:ui:build": "cd src/frontend/test && vite build"
+    "tauri:build": "cargo tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "2.9.1",

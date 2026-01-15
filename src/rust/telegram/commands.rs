@@ -176,8 +176,8 @@ pub async fn send_telegram_message_with_markdown(
 #[tauri::command]
 pub async fn start_telegram_sync(
     message: String,
-    predefined_options: Vec<String>,
-    is_markdown: bool,
+    menu: Vec<String>,
+    chalkboard: bool,
     state: State<'_, AppState>,
     app_handle: AppHandle,
 ) -> Result<(), String> {
@@ -224,7 +224,7 @@ pub async fn start_telegram_sync(
         .map_err(|e| format!("创建Telegram核心失败: {}", e))?;
 
     // 发送选项消息
-    core.send_options_message(&message, &predefined_options, is_markdown)
+    core.send_options_message(&message, &menu, chalkboard)
         .await
         .map_err(|e| format!("发送选项消息失败: {}", e))?;
 
@@ -247,7 +247,7 @@ pub async fn start_telegram_sync(
             bot_token_clone,
             chat_id_clone,
             app_handle_clone,
-            predefined_options,
+            menu,
         )
         .await
         {
@@ -264,7 +264,7 @@ async fn start_telegram_listener(
     bot_token: String,
     chat_id: String,
     app_handle: AppHandle,
-    predefined_options_list: Vec<String>,
+    menu_list: Vec<String>,
 ) -> Result<(), String> {
     // 从AppHandle获取应用状态来读取API URL配置
     let api_url = match app_handle.try_state::<AppState>() {
@@ -292,8 +292,8 @@ async fn start_telegram_listener(
     let mut selected_options: std::collections::HashSet<String> = std::collections::HashSet::new();
     let mut options_message_id: Option<i32> = None;
     let mut user_input: String = String::new(); // 存储用户输入的文本
-    let predefined_options = predefined_options_list;
-    let has_options = !predefined_options.is_empty(); // 是否有预定义选项
+    let menu = menu_list;
+    let has_options = !menu.is_empty();
 
     // 获取当前最新的消息ID作为基准
     if let Ok(updates) = core.bot.get_updates().limit(10).await {
@@ -349,7 +349,7 @@ async fn start_telegram_listener(
                                         if let Ok(_) = core
                                             .update_inline_keyboard(
                                                 msg_id,
-                                                &predefined_options,
+                                                &menu,
                                                 &selected_vec,
                                             )
                                             .await {}

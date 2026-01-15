@@ -1,23 +1,23 @@
 use tauri::State;
 use crate::config::AppState;
-use super::types::{Context7Request, Context7Config, TestConnectionResponse};
+use super::types::{DocsRequest, DocsConfig, TestConnectionResponse, docs_api_base_url};
 
-/// 测试 Context7 连接
+/// 测试 Docs 连接
 #[tauri::command]
-pub async fn test_context7_connection(
+pub async fn test_docs_connection(
     library: Option<String>,
     topic: Option<String>,
     state: State<'_, AppState>
 ) -> Result<TestConnectionResponse, String> {
     // 读取配置并立即释放锁
-    let context7_config = {
+    let docs_config = {
         let config = state.config
             .lock()
             .map_err(|e| format!("获取配置失败: {}", e))?;
 
-        Context7Config {
-            api_key: config.mcp_config.context7_api_key.clone(),
-            base_url: "https://context7.com/api/v2".to_string(),
+        DocsConfig {
+            api_key: config.mcp_config.docs_api_key.clone(),
+            base_url: docs_api_base_url(),
         }
     }; // config 在这里自动 drop
 
@@ -26,7 +26,7 @@ pub async fn test_context7_connection(
     let test_topic = topic.or_else(|| Some("core".to_string()));
 
     // 执行测试查询
-    let test_request = Context7Request {
+    let test_request = DocsRequest {
         library: test_library.clone(),
         topic: test_topic,
         version: None,
@@ -34,7 +34,7 @@ pub async fn test_context7_connection(
     };
 
     // 调用内部方法执行查询
-    match execute_test_query(&context7_config, &test_request).await {
+    match execute_test_query(&docs_config, &test_request).await {
         Ok(preview) => {
             Ok(TestConnectionResponse {
                 success: true,
@@ -54,8 +54,8 @@ pub async fn test_context7_connection(
 
 /// 执行测试查询
 async fn execute_test_query(
-    config: &Context7Config,
-    request: &Context7Request
+    config: &DocsConfig,
+    request: &DocsRequest
 ) -> Result<String, String> {
     use reqwest::header::AUTHORIZATION;
     use reqwest::Client;
@@ -97,7 +97,7 @@ async fn execute_test_query(
         return Err(format_test_error(status.as_u16(), &error_text, &request.library));
     }
 
-    // 读取响应文本 (Context7 API 返回纯文本 Markdown，不是 JSON)
+    // 读取响应文本 (Docs API 返回纯文本 Markdown，不是 JSON)
     let response_text = response.text().await
         .map_err(|e| format!("读取响应失败: {}", e))?;
 
@@ -128,34 +128,34 @@ fn format_test_error(status_code: u16, error_text: &str, library: &str) -> Strin
         401 => "API 密钥无效或已过期".to_string(),
         404 => format!("库 \"{}\" 不存在，请检查库标识符是否正确", library),
         429 => "速率限制已达上限，建议配置 API Key".to_string(),
-        500..=599 => format!("Context7 服务器错误: {}", error_text),
+        500..=599 => format!("Docs 服务器错误: {}", error_text),
         _ => format!("请求失败 (状态码: {}): {}", status_code, error_text),
     }
 }
 
-/// 获取 Context7 配置 (用于前端显示)
+/// 获取 Docs 配置 (用于前端显示)
 #[tauri::command]
-pub async fn get_context7_config(
+pub async fn get_docs_config(
     state: State<'_, AppState>
-) -> Result<Context7ConfigResponse, String> {
+) -> Result<DocsConfigResponse, String> {
     let config = state.config
         .lock()
         .map_err(|e| format!("获取配置失败: {}", e))?;
     
-    Ok(Context7ConfigResponse {
-        api_key: config.mcp_config.context7_api_key.clone(),
+    Ok(DocsConfigResponse {
+        api_key: config.mcp_config.docs_api_key.clone(),
     })
 }
 
-/// Context7 配置响应
+/// Docs 配置响应
 #[derive(serde::Serialize)]
-pub struct Context7ConfigResponse {
+pub struct DocsConfigResponse {
     pub api_key: Option<String>,
 }
 
-/// 保存 Context7 配置
+/// 保存 Docs 配置
 #[tauri::command]
-pub async fn save_context7_config(
+pub async fn save_docs_config(
     api_key: String,
     state: State<'_, AppState>,
     app: tauri::AppHandle,
@@ -167,7 +167,7 @@ pub async fn save_context7_config(
             .map_err(|e| format!("获取配置失败: {}", e))?;
 
         // 如果 API Key 为空，设置为 None
-        config.mcp_config.context7_api_key = if api_key.trim().is_empty() {
+        config.mcp_config.docs_api_key = if api_key.trim().is_empty() {
             None
         } else {
             Some(api_key.trim().to_string())

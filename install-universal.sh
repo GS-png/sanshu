@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 三术 MCP 工具安装脚本 - 支持 macOS、Linux
+# DevKit MCP 工具安装脚本 - 支持 macOS、Linux
 # 只需要构建和安装两个CLI工具即可运行MCP
 
 set -e
 
-echo "🚀 开始安装 三术 MCP 工具..."
+echo "🚀 开始安装 DevKit MCP 工具..."
 
 # 检测操作系统
 OS="unknown"
@@ -38,10 +38,10 @@ if ! cargo tauri --version >/dev/null 2>&1; then
 fi
 
 cargo tauri build --no-bundle
-cargo build --release --bin sanshu-mcp
+cargo build --release --bin devkit-mcp
 
 # 检查构建结果
-if [[ ! -f "target/release/sanshu-ui" ]] || [[ ! -f "target/release/sanshu-mcp" ]]; then
+if [[ ! -f "target/release/devkit-ui" ]] || [[ ! -f "target/release/devkit-mcp" ]]; then
     echo "❌ CLI 工具构建失败"
     echo "请检查构建错误并重试"
     exit 1
@@ -57,10 +57,10 @@ if [[ "$OS" == "macos" ]]; then
     INSTALL_DIR="/usr/local/bin"
 
     echo "📋 安装 CLI 工具到 $INSTALL_DIR..."
-    sudo cp "target/release/sanshu-ui" "$INSTALL_DIR/sanshu-ui"
-    sudo cp "target/release/sanshu-mcp" "$INSTALL_DIR/sanshu-mcp"
-    sudo chmod +x "$INSTALL_DIR/sanshu-ui"
-    sudo chmod +x "$INSTALL_DIR/sanshu-mcp"
+    sudo cp "target/release/devkit-ui" "$INSTALL_DIR/devkit-ui"
+    sudo cp "target/release/devkit-mcp" "$INSTALL_DIR/devkit-mcp"
+    sudo chmod +x "$INSTALL_DIR/devkit-ui"
+    sudo chmod +x "$INSTALL_DIR/devkit-mcp"
 
     echo "✅ CLI 工具已安装到 $INSTALL_DIR"
 
@@ -74,10 +74,10 @@ elif [[ "$OS" == "linux" ]]; then
     mkdir -p "$BIN_DIR"
 
     # 复制CLI工具
-    cp "target/release/sanshu-ui" "$BIN_DIR/sanshu-ui"
-    cp "target/release/sanshu-mcp" "$BIN_DIR/sanshu-mcp"
-    chmod +x "$BIN_DIR/sanshu-ui"
-    chmod +x "$BIN_DIR/sanshu-mcp"
+    cp "target/release/devkit-ui" "$BIN_DIR/devkit-ui"
+    cp "target/release/devkit-mcp" "$BIN_DIR/devkit-mcp"
+    chmod +x "$BIN_DIR/devkit-ui"
+    chmod +x "$BIN_DIR/devkit-mcp"
 
     echo "✅ CLI 工具已安装到 $BIN_DIR"
 
@@ -96,15 +96,15 @@ else
 fi
 
 echo ""
-echo "🎉 三术 MCP 工具安装完成！"
+echo "🎉 DevKit MCP 工具安装完成！"
 echo ""
 echo "📋 使用方法："
 echo "  💻 MCP 服务器模式:"
-echo "    sanshu-mcp                       - 启动 MCP 服务器"
+echo "    devkit-mcp                       - 启动 MCP 服务器"
 echo ""
 echo "  🎨 弹窗界面模式:"
-echo "    sanshu-ui                        - 启动设置界面"
-echo "    sanshu-ui --mcp-request file     - MCP 弹窗模式"
+echo "    devkit-ui                        - 启动设置界面"
+echo "    devkit-ui --mcp-request file     - MCP 弹窗模式"
 echo ""
 echo "📝 配置 MCP 客户端："
 echo "将以下内容添加到您的 MCP 客户端配置中："
@@ -112,8 +112,8 @@ echo ""
 cat << 'EOF'
 {
   "mcpServers": {
-    "sanshu": {
-      "command": "sanshu-mcp"
+    "devkit": {
+      "command": "devkit-mcp"
     }
   }
 }
@@ -121,7 +121,7 @@ EOF
 echo ""
 echo "💡 重要说明："
 echo "  • 两个CLI工具必须在同一目录下才能正常工作"
-echo "  • 'sanshu-mcp' 是MCP服务器，'sanshu-ui' 是弹窗界面"
+echo "  • 'devkit-mcp' 是MCP服务器，'devkit-ui' 是弹窗界面"
 echo "  • 无需安装完整应用，只需要这两个CLI工具即可"
 echo ""
 

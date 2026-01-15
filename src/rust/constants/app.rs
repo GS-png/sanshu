@@ -1,37 +1,37 @@
-// 应用程序相关常量
+// Application constants
 
-/// 应用程序名称
-pub const NAME: &str = "三术";
+/// Application name
+pub const NAME: &str = "DevKit";
 
-/// 应用程序英文名称
-pub const NAME_EN: &str = "sanshu";
+/// Application name (lowercase)
+pub const NAME_EN: &str = "devkit";
 
-/// 应用程序描述
-pub const DESCRIPTION: &str = "智能代码审查工具";
+/// Application description
+pub const DESCRIPTION: &str = "Development toolkit for enhanced coding workflow";
 
 /// 应用程序版本（从 Cargo.toml 获取）
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// 应用程序作者
-pub const AUTHOR: &str = "yuaotian";
+/// Application author
+pub const AUTHOR: &str = "aspect-build";
 
-/// 应用程序主页
-pub const HOMEPAGE: &str = "https://github.com/yuaotian/sanshu";
+/// Application homepage
+pub const HOMEPAGE: &str = "https://github.com/aspect-build/devkit";
 
-/// 应用程序仓库
-pub const REPOSITORY: &str = "https://github.com/yuaotian/sanshu";
+/// Application repository
+pub const REPOSITORY: &str = "https://github.com/aspect-build/devkit";
 
-/// 应用程序许可证
+/// Application license
 pub const LICENSE: &str = "MIT";
 
-/// 配置文件名
+/// Config file name
 pub const CONFIG_FILE_NAME: &str = "config.json";
 
-/// 日志文件名前缀
-pub const LOG_FILE_PREFIX: &str = "sanshu";
+/// Log file prefix
+pub const LOG_FILE_PREFIX: &str = "devkit";
 
-/// 应用程序标识符（用于系统集成）
-pub const APP_IDENTIFIER: &str = "com.yuaotian.sanshu";
+/// Application identifier
+pub const APP_IDENTIFIER: &str = "com.aspect.devkit";
 
 /// 用户代理字符串
 pub const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));

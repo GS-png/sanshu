@@ -205,10 +205,10 @@ jobs:
           cargo install tauri-cli --locked --version 2.9.1
           if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
             cargo tauri build --no-bundle ${{ matrix.args }}
-            cargo build --release ${{ matrix.args }} --bin sanshu-mcp
+            cargo build --release ${{ matrix.args }} --bin devkit-mcp
           else
             cargo tauri build --no-bundle
-            cargo build --release --bin sanshu-mcp
+            cargo build --release --bin devkit-mcp
           fi
 
       - name: 打包产物
@@ -230,24 +230,24 @@ jobs:
 
           # 复制并压缩
           if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            cp "$TARGET_DIR/sanshu-ui.exe" cli-package/
-            cp "$TARGET_DIR/sanshu-mcp.exe" cli-package/
+            cp "$TARGET_DIR/devkit-ui.exe" cli-package/
+            cp "$TARGET_DIR/devkit-mcp.exe" cli-package/
             cd cli-package
-            7z a ../sanshu-cli-${TAG_NAME}-${{ matrix.name }}.zip *
+            7z a ../devkit-cli-${TAG_NAME}-${{ matrix.name }}.zip *
           else
-            cp "$TARGET_DIR/sanshu-ui" cli-package/
-            cp "$TARGET_DIR/sanshu-mcp" cli-package/
+            cp "$TARGET_DIR/devkit-ui" cli-package/
+            cp "$TARGET_DIR/devkit-mcp" cli-package/
             cd cli-package
-            tar -czf ../sanshu-cli-${TAG_NAME}-${{ matrix.name }}.tar.gz *
+            tar -czf ../devkit-cli-${TAG_NAME}-${{ matrix.name }}.tar.gz *
           fi
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: sanshu-cli-${{ matrix.name }}
+          name: devkit-cli-${{ matrix.name }}
           path: |
-            sanshu-cli-*.tar.gz
-            sanshu-cli-*.zip
+            devkit-cli-*.tar.gz
+            devkit-cli-*.zip
           if-no-files-found: error
 
   # -----------------------------------------------------------------------------
@@ -322,8 +322,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/*/sanshu-cli-*.tar.gz
-            artifacts/*/sanshu-cli-*.zip
+            artifacts/*/devkit-cli-*.tar.gz
+            artifacts/*/devkit-cli-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -357,8 +357,8 @@ jobs:
           )
 
           text = re.sub(
-              r'releases/download/v[0-9.]+/sanshu-cli-v[0-9.]+-',
-              f'releases/download/{tag}/sanshu-cli-{tag}-',
+              r'releases/download/v[0-9.]+/devkit-cli-v[0-9.]+-',
+              f'releases/download/{tag}/devkit-cli-{tag}-',
               text,
           )
 

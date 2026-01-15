@@ -2,7 +2,7 @@ use anyhow::Result;
 use rmcp::model::{ErrorData as McpError, CallToolResult, Content};
 
 use super::{MemoryManager, MemoryCategory};
-use crate::mcp::{JiyiRequest, utils::{validate_project_path, project_path_error}};
+use crate::mcp::{StoreRequest, utils::{validate_project_path, project_path_error}};
 use crate::log_debug;
 
 /// Project memory management tool
@@ -10,8 +10,8 @@ use crate::log_debug;
 pub struct MemoryTool;
 
 impl MemoryTool {
-    pub async fn jiyi(
-        request: JiyiRequest,
+    pub async fn store(
+        request: StoreRequest,
     ) -> Result<CallToolResult, McpError> {
         if let Err(e) = validate_project_path(&request.project_path) {
             return Err(project_path_error(format!(
@@ -25,7 +25,7 @@ impl MemoryTool {
             .map_err(|e| McpError::internal_error(format!("Failed to create memory manager: {}", e), None))?;
 
         let mut index_hint = String::new();
-        if is_sou_enabled() {
+        if is_index_enabled() {
             if let Err(e) = try_trigger_background_index(&request.project_path).await {
                 log_debug!("Background index trigger failed (not affecting memory): {}", e);
             } else {
@@ -69,10 +69,10 @@ impl MemoryTool {
     }
 }
 
-/// Check if sou tool is enabled
-fn is_sou_enabled() -> bool {
+/// Check if index tool is enabled
+fn is_index_enabled() -> bool {
     match crate::config::load_standalone_config() {
-        Ok(config) => config.mcp_config.tools.get("sou").copied().unwrap_or(false),
+        Ok(config) => config.mcp_config.tools.get("index").copied().unwrap_or(false),
         Err(_) => false,
     }
 }

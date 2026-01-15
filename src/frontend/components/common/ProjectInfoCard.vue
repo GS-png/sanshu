@@ -14,7 +14,7 @@ const formattedLastCheckTime = computed(() => {
 // 安全打开GitHub链接
 async function openGitHub() {
   try {
-    await safeOpenUrl('https://github.com/yuaotian/sanshu')
+    await safeOpenUrl('https://github.com/aspect-build/devkit')
     message.success('正在打开GitHub页面...')
   }
   catch (error) {
@@ -31,7 +31,7 @@ async function openGitHub() {
 // 安全打开GitHub Star页面
 async function openGitHubStars() {
   try {
-    await safeOpenUrl('https://github.com/yuaotian/sanshu/stargazers')
+    await safeOpenUrl('https://github.com/aspect-build/devkit/stargazers')
     message.success('正在打开Star页面...')
   }
   catch (error) {
@@ -87,7 +87,7 @@ onMounted(async () => {
         </div>
         <div>
           <h3 class="font-semibold text-gray-900 dark:text-white text-sm">
-            三术 {{ versionInfo ? `v${versionInfo.current}` : 'v0.2.0' }}
+            DevKit {{ versionInfo ? `v${versionInfo.current}` : 'v0.2.0' }}
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">
             智能代码审查工具，支持MCP协议集成

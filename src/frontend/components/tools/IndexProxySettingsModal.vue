@@ -5,10 +5,10 @@
  * 代理设置独立弹窗组件
  * 包含：代理配置、自动检测、测速、测速报告等功能
  */
-import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
-import { useDialog, useMessage } from 'naive-ui';
-import { computed, onUnmounted, ref } from 'vue';
+import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
+import { useDialog, useMessage } from 'naive-ui'
+import { computed, onUnmounted, ref } from 'vue'
 
 // Props
 const props = defineProps<{
@@ -224,7 +224,7 @@ const speedTestDisabledReason = computed(() => {
     return '请先配置租户地址'
   }
   if (!props.config.token) {
-    return '请先配置 ACE Token'
+    return '请先配置 ACE 密钥'
   }
   if (speedTestMode.value === 'direct') {
     return ''
@@ -304,17 +304,17 @@ function confirmProxySelection() {
 
 async function loadIndexedProjectsForSpeedTest() {
   projectPickerLoading.value = true
-  console.log('[SouProxy] 🔄 开始加载已索引项目列表...')
+  console.log('[IndexProxy] 🔄 开始加载已索引项目列表...')
 
   try {
     const statusResult = await invoke<{ projects: Record<string, ProjectIndexStatusLite> }>('get_all_acemcp_index_status')
 
     // 详细日志：打印原始返回数据
-    console.log('[SouProxy] 📦 后端返回原始数据:', statusResult)
-    console.log('[SouProxy] 📊 项目总数（原始）:', Object.keys(statusResult.projects || {}).length)
+    console.log('[IndexProxy] 📦 后端返回原始数据:', statusResult)
+    console.log('[IndexProxy] 📊 项目总数（原始）:', Object.keys(statusResult.projects || {}).length)
 
     const allProjects = Object.values(statusResult.projects || {})
-    console.log('[SouProxy] 📋 所有项目列表:', allProjects.map(p => ({
+    console.log('[IndexProxy] 📋 所有项目列表:', allProjects.map(p => ({
       root: p.project_root,
       status: p.status,
       total_files: p.total_files,
@@ -325,17 +325,17 @@ async function loadIndexedProjectsForSpeedTest() {
     // 注意：如果项目正在索引中（status: indexing），可能 total_files 还未更新
     const list = allProjects.filter((p) => {
       const hasFiles = (p.total_files || 0) > 0
-      console.log(`[SouProxy] 📁 项目 ${getProjectName(p.project_root)}: total_files=${p.total_files}, status=${p.status}, 通过过滤=${hasFiles}`)
+      console.log(`[IndexProxy] 📁 项目 ${getProjectName(p.project_root)}: total_files=${p.total_files}, status=${p.status}, 通过过滤=${hasFiles}`)
       return hasFiles
     })
 
-    console.log('[SouProxy] ✅ 过滤后项目数:', list.length)
-    console.log('[SouProxy] 📝 过滤后项目列表:', list.map(p => getProjectName(p.project_root)))
+    console.log('[IndexProxy] ✅ 过滤后项目数:', list.length)
+    console.log('[IndexProxy] 📝 过滤后项目列表:', list.map(p => getProjectName(p.project_root)))
 
     indexedProjects.value = list
   }
   catch (e) {
-    console.error('[SouProxy] ❌ 加载已索引项目失败:', e)
+    console.error('[IndexProxy] ❌ 加载已索引项目失败:', e)
     message.error(`加载已索引项目失败: ${e}`)
     indexedProjects.value = []
   }
@@ -426,7 +426,7 @@ async function runSpeedTest() {
     return
   }
   if (!props.config.token) {
-    message.error('请先配置 ACE Token')
+    message.error('请先配置 ACE 密钥')
     return
   }
   if (!speedTestProjectRoot.value) {
@@ -440,21 +440,24 @@ async function runSpeedTest() {
   speedTestProgressData.value = null
   multiQuerySearchDetails.value = []
   multiQueryDetailsExpanded.value = false
-  
+
   // 注册进度事件监听器
   unlistenSpeedTestProgress = await listen<SpeedTestProgress>('speed_test_progress', (event) => {
     const progress = event.payload
     speedTestProgressData.value = progress
-    
+
     // 构建进度文本
-    const statusIcon = progress.status === 'Running' ? '⏳' 
-      : progress.status === 'Completed' ? '✅' 
-      : progress.status === 'Failed' ? '❌' 
-      : '⏸️'
-    
+    const statusIcon = progress.status === 'Running'
+      ? '⏳'
+      : progress.status === 'Completed'
+        ? '✅'
+        : progress.status === 'Failed'
+          ? '❌'
+          : '⏸️'
+
     const subStepText = progress.sub_step ? ` - ${progress.sub_step}` : ''
     const detailText = progress.detail ? ` (${progress.detail})` : ''
-    
+
     speedTestProgress.value = `${statusIcon} ${progress.stage_name}${subStepText}${detailText} [${progress.percentage}%]`
   })
 
@@ -564,7 +567,7 @@ function buildSpeedTestReportPayload() {
     : undefined
 
   return {
-    tool: 'sou',
+    tool: 'index',
     timestamp: speedTestResult.value.timestamp,
     mode: speedTestResult.value.mode,
     query: speedTestQuery.value,
@@ -650,7 +653,7 @@ async function downloadSpeedTestReport() {
   try {
     const ts = speedTestResult.value?.timestamp || new Date().toISOString()
     const safeTs = ts.replace(/[:.]/g, '-').replace('T', '_').replace('Z', '')
-    const filename = `sou-speedtest-${safeTs}.json`
+    const filename = `index-speedtest-${safeTs}.json`
 
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json;charset=utf-8' })
     const url = URL.createObjectURL(blob)
@@ -717,17 +720,19 @@ function getDiffColorClass(proxyMs: number | null, directMs: number | null): str
 function getStepStatus(stepName: string): 'pending' | 'current' | 'completed' {
   const currentStage = speedTestProgressData.value?.stage ?? -1
   const stageMap: Record<string, number> = {
-    '初始化': 0,
-    'Ping': 1,
-    '搜索': 2,
-    '单文件': 3,
-    '项目': 4,
-    '报告': 5,
+    初始化: 0,
+    Ping: 1,
+    搜索: 2,
+    单文件: 3,
+    项目: 4,
+    报告: 5,
   }
   const stepStage = stageMap[stepName] ?? -1
-  
-  if (stepStage < currentStage) return 'completed'
-  if (stepStage === currentStage) return 'current'
+
+  if (stepStage < currentStage)
+    return 'completed'
+  if (stepStage === currentStage)
+    return 'current'
   return 'pending'
 }
 
@@ -738,7 +743,7 @@ function formatBytes(bytes: number): string {
   const k = 1024
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  const size = bytes / Math.pow(k, i)
+  const size = bytes / k ** i
   return `${size.toFixed(i > 0 ? 1 : 0)}${sizes[i]}`
 }
 
@@ -1042,7 +1047,7 @@ function formatRelativeTime(timeStr: string | null): string {
                     {{ speedTestProgressData?.percentage ?? 0 }}%
                   </span>
                 </div>
-                
+
                 <!-- 进度条 -->
                 <n-progress
                   type="line"
@@ -1052,24 +1057,24 @@ function formatRelativeTime(timeStr: string | null): string {
                   :status="speedTestProgressData?.status === 'Failed' ? 'error' : 'success'"
                   class="h-2"
                 />
-                
+
                 <!-- 当前阶段信息 -->
                 <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 space-y-1">
-                <div class="flex items-center gap-2 text-sm">
-                    <span 
-                      v-if="speedTestProgressData?.status === 'Running'" 
+                  <div class="flex items-center gap-2 text-sm">
+                    <span
+                      v-if="speedTestProgressData?.status === 'Running'"
                       class="i-fa6-solid-spinner animate-spin text-primary-500"
                     />
-                    <span 
-                      v-else-if="speedTestProgressData?.status === 'Completed'" 
+                    <span
+                      v-else-if="speedTestProgressData?.status === 'Completed'"
                       class="i-fa6-solid-circle-check text-green-500"
                     />
-                    <span 
-                      v-else-if="speedTestProgressData?.status === 'Failed'" 
+                    <span
+                      v-else-if="speedTestProgressData?.status === 'Failed'"
                       class="i-fa6-solid-circle-xmark text-red-500"
                     />
                     <span v-else class="i-fa6-regular-clock text-gray-400 dark:text-gray-500" />
-                    
+
                     <span class="font-medium text-gray-700 text-gray-200">
                       {{ speedTestProgressData?.stage_name ?? '初始化' }}
                     </span>
@@ -1077,21 +1082,20 @@ function formatRelativeTime(timeStr: string | null): string {
                       - {{ speedTestProgressData.sub_step }}
                     </span>
                   </div>
-                  
+
                   <div v-if="speedTestProgressData?.detail" class="text-xs text-gray-500 dark:text-gray-400 pl-6">
                     {{ speedTestProgressData.detail }}
                   </div>
                 </div>
-                
+
                 <!-- 进度步骤指示器 -->
                 <div class="flex justify-between px-1">
                   <div v-for="step in ['初始化', 'Ping', '搜索', '单文件', '项目', '报告']" :key="step" class="flex flex-col items-center">
-                    <div 
-                      :class="[
-                        'w-2 h-2 rounded-full transition-all',
-                        getStepStatus(step) === 'completed' ? 'bg-green-500 scale-125' :
-                        getStepStatus(step) === 'current' ? 'bg-primary-500 animate-pulse scale-110' :
-                        'bg-gray-300 dark:bg-gray-600'
+                    <div
+                      class="w-2 h-2 rounded-full transition-all" :class="[
+                        getStepStatus(step) === 'completed' ? 'bg-green-500 scale-125'
+                        : getStepStatus(step) === 'current' ? 'bg-primary-500 animate-pulse scale-110'
+                          : 'bg-gray-300 dark:bg-gray-600',
                       ]"
                     />
                     <span class="text-[10px] text-gray-400 mt-1">{{ step }}</span>
@@ -1325,12 +1329,12 @@ function formatRelativeTime(timeStr: string | null): string {
                               <span class="text-gray-400">响应: {{ formatBytes(metric.search_result_preview?.response_length || 0) }}</span>
                             </div>
                           </div>
-                          
+
                           <!-- 搜索结果片段列表 -->
                           <div class="divide-y divide-slate-100 dark:divide-slate-700/50">
                             <template v-if="metric.search_result_preview?.snippets?.length">
-                              <div 
-                                v-for="(snippet, i) in metric.search_result_preview.snippets" 
+                              <div
+                                v-for="(snippet, i) in metric.search_result_preview.snippets"
                                 :key="i"
                                 class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                               >
@@ -1352,7 +1356,9 @@ function formatRelativeTime(timeStr: string | null): string {
                             </template>
                             <div v-else class="p-8 text-center text-gray-400">
                               <div class="i-fa6-solid-inbox text-3xl mb-2 opacity-50" />
-                              <div class="text-sm">未获取到搜索结果预览</div>
+                              <div class="text-sm">
+                                未获取到搜索结果预览
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1361,8 +1367,12 @@ function formatRelativeTime(timeStr: string | null): string {
                       <!-- 无搜索指标时的占位 -->
                       <div v-if="!speedTestResult.metrics.some(m => m.metric_type === 'search' && m.search_result_preview)" class="py-12 text-center text-gray-400">
                         <div class="i-fa6-solid-search text-4xl mb-3 opacity-30" />
-                        <div class="text-sm font-medium mb-1">暂无搜索数据</div>
-                        <div class="text-xs opacity-70">运行包含语义搜索的测试后，将在此处展示搜索结果预览</div>
+                        <div class="text-sm font-medium mb-1">
+                          暂无搜索数据
+                        </div>
+                        <div class="text-xs opacity-70">
+                          运行包含语义搜索的测试后，将在此处展示搜索结果预览
+                        </div>
                       </div>
                     </div>
                   </n-tab-pane>

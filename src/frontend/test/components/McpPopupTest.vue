@@ -20,7 +20,7 @@ const requestTemplates = [
     request: {
       id: 'test-basic',
       message: '这是一个基础的模拟请求，用于测试弹窗功能。请确认是否继续执行操作。',
-      is_markdown: false,
+      chalkboard: false,
     },
   },
   {
@@ -28,8 +28,8 @@ const requestTemplates = [
     request: {
       id: 'test-options',
       message: '请选择您需要的操作类型：',
-      predefined_options: ['创建新文件', '修改现有文件', '删除文件', '查看文件内容'],
-      is_markdown: false,
+      menu: ['创建新文件', '修改现有文件', '删除文件', '查看文件内容'],
+      chalkboard: false,
     },
   },
   {
@@ -102,8 +102,8 @@ function isValidEmail(email: string): boolean {
 \`\`\`
 
 请选择您希望的操作：`,
-      predefined_options: ['应用建议的改进', '需要进一步讨论', '查看更多示例', '拒绝修改'],
-      is_markdown: true,
+      menu: ['应用建议的改进', '需要进一步讨论', '查看更多示例', '拒绝修改'],
+      chalkboard: true,
     },
   },
   {
@@ -126,7 +126,7 @@ function isValidEmail(email: string): boolean {
 1. 切换主题
 2. 选择预定义选项
 3. 输入文本内容
-4. 拖拽或粘贴图片
+4. 拖拽或粘贴食材
 5. 点击主界面按钮
 
 \`\`\`typescript
@@ -140,15 +140,15 @@ interface PopupSystem {
 \`\`\`
 
 请选择您要测试的功能：`,
-      predefined_options: [
+      menu: [
         '🎨 测试主题切换',
         '🏠 切换到主界面',
         '📝 测试文本输入',
-        '🖼️ 测试图片上传',
+        '🖼️ 测试食材',
         '⚡ 测试快捷键',
         '🔄 测试状态管理',
       ],
-      is_markdown: true,
+      chalkboard: true,
     },
   },
 ]
@@ -236,7 +236,7 @@ function togglePopup() {
                   <n-space align="center" justify="space-between">
                     <span>选项数量:</span>
                     <n-tag size="small" type="info">
-                      {{ currentRequest.predefined_options?.length || 0 }}
+                      {{ currentRequest.menu?.length || 0 }}
                     </n-tag>
                   </n-space>
                 </n-space>

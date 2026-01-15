@@ -7,7 +7,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-use crate::mcp::types::{McpResponse, PopupRequest};
+use crate::mcp::types::{DishResponse, PopupRequest};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HistoryEntrySummary {
@@ -24,14 +24,15 @@ pub struct HistoryEntryDetail {
     pub request: Option<PopupRequest>,
     pub response: serde_json::Value,
     pub markdown: String,
-    pub images: Vec<HistoryImage>,
+    #[serde(default)]
+    pub ingredients: Vec<HistoryIngredient>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct HistoryImage {
+pub struct HistoryIngredient {
     pub filename: String,
-    pub media_type: String,
-    pub data_uri: String,
+    pub dish_type: String,
+    pub file_path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -42,7 +43,8 @@ struct HistoryEntryMeta {
     pub source: Option<String>,
     pub request: Option<PopupRequest>,
     pub response: serde_json::Value,
-    pub image_files: Vec<String>,
+    #[serde(default)]
+    pub ingredient_files: Vec<String>,
 }
 
 fn preview_from_meta(meta: &HistoryEntryMeta) -> String {
@@ -53,9 +55,9 @@ fn preview_from_meta(meta: &HistoryEntryMeta) -> String {
         }
     }
 
-    if let Ok(r) = serde_json::from_value::<McpResponse>(meta.response.clone()) {
-        if let Some(input) = r.user_input {
-            let first = input.lines().next().unwrap_or("").trim();
+    if let Ok(r) = serde_json::from_value::<DishResponse>(meta.response.clone()) {
+        if let Some(note) = r.note {
+            let first = note.lines().next().unwrap_or("").trim();
             if !first.is_empty() {
                 return first.to_string();
             }
@@ -69,8 +71,8 @@ pub fn history_base_dir() -> Result<PathBuf> {
     let base = dirs::data_dir()
         .or_else(dirs::config_dir)
         .ok_or_else(|| anyhow::anyhow!("无法获取数据目录"))?
-        .join("sanshu")
-        .join("mcp_history");
+        .join("bistro")
+        .join("journal");
     fs::create_dir_all(&base)?;
     Ok(base)
 }
@@ -99,7 +101,7 @@ fn ext_from_media_type(media_type: &str) -> &'static str {
 fn build_markdown(
     request: Option<&PopupRequest>,
     response: &serde_json::Value,
-    image_files: &[String],
+    ingredient_files: &[String],
 ) -> String {
     let mut out = String::new();
 
@@ -108,7 +110,7 @@ fn build_markdown(
         out.push_str(&req.message);
         out.push_str("\n\n");
 
-        if let Some(opts) = &req.predefined_options {
+        if let Some(opts) = &req.menu {
             if !opts.is_empty() {
                 out.push_str("## 选项\n\n");
                 for o in opts {
@@ -122,15 +124,15 @@ fn build_markdown(
     }
 
     out.push_str("# 回复\n\n");
-    match serde_json::from_value::<McpResponse>(response.clone()) {
+    match serde_json::from_value::<DishResponse>(response.clone()) {
         Ok(r) => {
-            if let Some(input) = r.user_input {
-                out.push_str(&input);
+            if let Some(note) = r.note {
+                out.push_str(&note);
                 out.push_str("\n\n");
             }
-            if !r.selected_options.is_empty() {
+            if !r.toppings.is_empty() {
                 out.push_str("## 选择\n\n");
-                for o in r.selected_options {
+                for o in r.toppings {
                     out.push_str("- ");
                     out.push_str(&o);
                     out.push_str("\n");
@@ -149,10 +151,10 @@ fn build_markdown(
         }
     }
 
-    if !image_files.is_empty() {
-        out.push_str("\n## 图片\n\n");
-        for f in image_files {
-            out.push_str(&format!("![](images/{})\n\n", f));
+    if !ingredient_files.is_empty() {
+        out.push_str("\n## 食材\n\n");
+        for f in ingredient_files {
+            out.push_str(&format!("![](ingredients/{})\n\n", f));
         }
     }
 
@@ -165,21 +167,22 @@ pub fn save_history_entry(request: Option<PopupRequest>, response: serde_json::V
     let now: DateTime<Utc> = Utc::now();
     let id = format!("{}-{}", now.format("%Y%m%dT%H%M%S%.3fZ"), Uuid::new_v4());
     let dir = entry_dir_from_id(&base, &id);
-    let images_dir = dir.join("images");
-    fs::create_dir_all(&images_dir)?;
+    let ingredients_dir = dir.join("ingredients");
+    fs::create_dir_all(&ingredients_dir)?;
 
-    let (timestamp, request_id, source, image_files) = match serde_json::from_value::<McpResponse>(response.clone()) {
+    let (timestamp, request_id, source, ingredient_files) =
+        match serde_json::from_value::<DishResponse>(response.clone()) {
         Ok(r) => {
-            let ts = r.metadata.timestamp.unwrap_or_else(|| now.to_rfc3339());
-            let rid = r.metadata.request_id;
-            let src = r.metadata.source;
+            let ts = r.ticket.cooked_at.unwrap_or_else(|| now.to_rfc3339());
+            let rid = r.ticket.ticket_id;
+            let src = r.ticket.station;
 
             let mut files = Vec::new();
-            for img in r.images {
-                let ext = ext_from_media_type(&img.media_type);
-                let filename = img.filename.unwrap_or_else(|| safe_filename(ext));
-                let bytes = base64::engine::general_purpose::STANDARD.decode(img.data)?;
-                fs::write(images_dir.join(&filename), bytes)?;
+            for ingredient in r.ingredients {
+                let ext = ext_from_media_type(&ingredient.dish_type);
+                let filename = safe_filename(ext);
+                let bytes = base64::engine::general_purpose::STANDARD.decode(ingredient.sauce)?;
+                fs::write(ingredients_dir.join(&filename), bytes)?;
                 files.push(filename);
             }
 
@@ -190,35 +193,39 @@ pub fn save_history_entry(request: Option<PopupRequest>, response: serde_json::V
 
     let response_for_meta = if let Some(obj) = response.as_object() {
         let mut obj = obj.clone();
-        if let Some(images) = obj.get("images").and_then(|v| v.as_array()) {
-            let mut sanitized_images = Vec::new();
-            for (idx, img) in images.iter().enumerate() {
-                let media_type = img
-                    .get("media_type")
+        let raw_ingredients = obj.get("ingredients").and_then(|v| v.as_array());
+        if let Some(ingredients) = raw_ingredients {
+            let mut sanitized_ingredients = Vec::new();
+            for (idx, ingredient) in ingredients.iter().enumerate() {
+                let dish_type = ingredient
+                    .get("dish_type")
                     .and_then(|v| v.as_str())
                     .unwrap_or("application/octet-stream")
                     .to_string();
-                let filename = img
-                    .get("filename")
+                let tag = ingredient
+                    .get("tag")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string())
-                    .or_else(|| image_files.get(idx).cloned());
+                    .or_else(|| ingredient_files.get(idx).cloned());
 
                 let mut item = serde_json::Map::new();
-                item.insert("media_type".to_string(), serde_json::Value::String(media_type));
-                if let Some(filename) = filename {
-                    item.insert("filename".to_string(), serde_json::Value::String(filename));
+                item.insert("dish_type".to_string(), serde_json::Value::String(dish_type));
+                if let Some(tag) = tag {
+                    item.insert("tag".to_string(), serde_json::Value::String(tag));
                 }
-                sanitized_images.push(serde_json::Value::Object(item));
+                sanitized_ingredients.push(serde_json::Value::Object(item));
             }
-            obj.insert("images".to_string(), serde_json::Value::Array(sanitized_images));
+            obj.insert(
+                "ingredients".to_string(),
+                serde_json::Value::Array(sanitized_ingredients),
+            );
         }
         serde_json::Value::Object(obj)
     } else {
         response.clone()
     };
 
-    let markdown = build_markdown(request.as_ref(), &response, &image_files);
+    let markdown = build_markdown(request.as_ref(), &response, &ingredient_files);
     fs::write(dir.join("entry.md"), &markdown)?;
 
     let meta = HistoryEntryMeta {
@@ -228,7 +235,7 @@ pub fn save_history_entry(request: Option<PopupRequest>, response: serde_json::V
         source,
         request,
         response: response_for_meta,
-        image_files,
+        ingredient_files,
     };
 
     fs::write(dir.join("meta.json"), serde_json::to_string_pretty(&meta)?)?;
@@ -281,32 +288,33 @@ pub fn get_history_entry(id: String) -> Result<HistoryEntryDetail> {
     let meta: HistoryEntryMeta = serde_json::from_str(&fs::read_to_string(meta_path)?)?;
     let markdown = fs::read_to_string(dir.join("entry.md")).unwrap_or_default();
 
-    let mut images = Vec::new();
-    let images_dir = dir.join("images");
-    for filename in &meta.image_files {
-        let path = images_dir.join(filename);
-        if let Ok(bytes) = fs::read(&path) {
-            let media_type = if filename.ends_with(".png") {
-                "image/png"
-            } else if filename.ends_with(".jpg") || filename.ends_with(".jpeg") {
-                "image/jpeg"
-            } else if filename.ends_with(".webp") {
-                "image/webp"
-            } else if filename.ends_with(".gif") {
-                "image/gif"
-            } else if filename.ends_with(".svg") {
-                "image/svg+xml"
-            } else {
-                "application/octet-stream"
-            };
-
-            let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
-            images.push(HistoryImage {
-                filename: filename.clone(),
-                media_type: media_type.to_string(),
-                data_uri: format!("data:{};base64,{}", media_type, b64),
-            });
+    let mut ingredients = Vec::new();
+    let ingredients_dir = dir.join("ingredients");
+    for filename in &meta.ingredient_files {
+        let path = ingredients_dir.join(filename);
+        if !path.exists() {
+            continue;
         }
+
+        let dish_type = if filename.ends_with(".png") {
+            "image/png"
+        } else if filename.ends_with(".jpg") || filename.ends_with(".jpeg") {
+            "image/jpeg"
+        } else if filename.ends_with(".webp") {
+            "image/webp"
+        } else if filename.ends_with(".gif") {
+            "image/gif"
+        } else if filename.ends_with(".svg") {
+            "image/svg+xml"
+        } else {
+            "application/octet-stream"
+        };
+
+        ingredients.push(HistoryIngredient {
+            filename: filename.clone(),
+            dish_type: dish_type.to_string(),
+            file_path: path.to_string_lossy().to_string(),
+        });
     }
 
     let preview = preview_from_meta(&meta);
@@ -323,7 +331,7 @@ pub fn get_history_entry(id: String) -> Result<HistoryEntryDetail> {
         request: meta.request,
         response: meta.response,
         markdown,
-        images,
+        ingredients,
     })
 }
 
@@ -407,7 +415,7 @@ pub fn export_history_entry_zip(id: String, target_dir: PathBuf) -> Result<PathB
     }
 
     fs::create_dir_all(&target_dir)?;
-    let zip_path = target_dir.join(format!("sanshu-mcp-history-{}.zip", id));
+    let zip_path = target_dir.join(format!("bistro-journal-{}.zip", id));
 
     let file = fs::File::create(&zip_path)?;
     let mut zip = zip::ZipWriter::new(file);
@@ -466,7 +474,7 @@ pub fn export_history_by_time_range_zip(
     fs::create_dir_all(&target_dir)?;
     let now: DateTime<Utc> = Utc::now();
     let zip_path = target_dir.join(format!(
-        "sanshu-mcp-history-range-{}.zip",
+        "bistro-journal-range-{}.zip",
         now.format("%Y%m%dT%H%M%S%.3fZ")
     ));
 
@@ -541,7 +549,7 @@ pub fn export_history_by_time_range_zip(
         }
 
         let entry_id = meta.id.clone();
-        add_dir_to_zip_with_prefix(&mut zip, options, &dir, &dir, &format!("mcp_history/{}", entry_id))?;
+        add_dir_to_zip_with_prefix(&mut zip, options, &dir, &dir, &format!("journal/{}", entry_id))?;
         added += 1;
     }
 

@@ -54,14 +54,11 @@ impl Default for LogConfig {
     }
 }
 
-/// 获取 GUI 模式的日志文件路径
-/// 使用 dirs::config_dir() 确保跨平台兼容性
-/// Windows: C:\Users\<用户>\AppData\Roaming\sanshu\log\acemcp.log
-/// Linux: ~/.config/sanshu/log/acemcp.log
-/// macOS: ~/Library/Application Support/sanshu/log/acemcp.log
+/// Get GUI mode log file path
+/// Uses dirs::config_dir() for cross-platform compatibility
 fn get_gui_log_path() -> Option<PathBuf> {
     dirs::config_dir().map(|config_dir| {
-        config_dir.join("sanshu").join("log").join("acemcp.log")
+        config_dir.join("devkit").join("log").join("acemcp.log")
     })
 }
 
@@ -321,7 +318,7 @@ pub fn init_mcp_logger() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(p) = get_gui_log_path() {
         candidate_paths.push(p);
     }
-    candidate_paths.push(std::env::temp_dir().join("sanshu_mcp.log"));
+    candidate_paths.push(std::env::temp_dir().join("devkit_mcp.log"));
 
     let log_file_path = candidate_paths
         .iter()

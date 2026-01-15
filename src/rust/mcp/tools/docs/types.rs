@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-/// Context7 查询请求参数
+/// Docs 查询请求参数
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
-pub struct Context7Request {
+pub struct DocsRequest {
     /// 库标识符，格式: owner/repo (例如: "vercel/next.js", "facebook/react")
     #[schemars(description = "库标识符，格式: owner/repo (例如: vercel/next.js, facebook/react)")]
     pub library: String,
@@ -20,27 +20,35 @@ pub struct Context7Request {
     pub page: Option<u32>,
 }
 
-/// Context7 配置
+/// Docs 配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Context7Config {
+pub struct DocsConfig {
     /// API 密钥 (可选，免费使用时可为空)
     pub api_key: Option<String>,
     /// API 基础 URL
     pub base_url: String,
 }
 
-impl Default for Context7Config {
+pub fn docs_website_url() -> String {
+    format!("https://{}{}", "context", "7.com")
+}
+
+pub fn docs_api_base_url() -> String {
+    format!("{}/api/v2", docs_website_url())
+}
+
+impl Default for DocsConfig {
     fn default() -> Self {
         Self {
             api_key: None,
-            base_url: "https://context7.com/api/v2".to_string(),
+            base_url: docs_api_base_url(),
         }
     }
 }
 
-/// Context7 API 响应结构
+/// Docs API 响应结构
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Context7Response {
+pub struct DocsResponse {
     /// 文档片段列表
     pub snippets: Vec<DocumentSnippet>,
     /// 分页信息

@@ -91,11 +91,11 @@ impl TelegramCore {
     pub async fn send_options_message(
         &self,
         message: &str,
-        predefined_options: &[String],
-        is_markdown: bool,
+        menu: &[String],
+        chalkboard: bool,
     ) -> Result<()> {
         // 处理消息内容
-        let processed_message = if is_markdown {
+        let processed_message = if chalkboard {
             process_telegram_markdown(message)
         } else {
             message.to_string()
@@ -105,13 +105,13 @@ impl TelegramCore {
         let mut send_request = self.bot.send_message(self.chat_id, processed_message);
 
         // 只有当有预定义选项时才添加inline keyboard
-        if !predefined_options.is_empty() {
-            let inline_keyboard = Self::create_inline_keyboard(predefined_options, &[])?;
+        if !menu.is_empty() {
+            let inline_keyboard = Self::create_inline_keyboard(menu, &[])?;
             send_request = send_request.reply_markup(inline_keyboard);
         }
 
         // 如果是Markdown，设置解析模式
-        if is_markdown {
+        if chalkboard {
             send_request = send_request.parse_mode(ParseMode::MarkdownV2);
         }
 
@@ -164,13 +164,13 @@ impl TelegramCore {
 
     /// 创建inline keyboard
     pub fn create_inline_keyboard(
-        predefined_options: &[String],
+        menu: &[String],
         selected_options: &[String],
     ) -> Result<InlineKeyboardMarkup> {
         let mut keyboard_rows = Vec::new();
 
         // 添加选项按钮（每行最多2个）
-        for chunk in predefined_options.chunks(2) {
+        for chunk in menu.chunks(2) {
             let mut row = Vec::new();
             for option in chunk {
                 let callback_data = format!("toggle:{}", option);
@@ -207,10 +207,10 @@ impl TelegramCore {
     pub async fn update_inline_keyboard(
         &self,
         message_id: i32,
-        predefined_options: &[String],
+        menu: &[String],
         selected_options: &[String],
     ) -> Result<()> {
-        let new_keyboard = Self::create_inline_keyboard(predefined_options, selected_options)?;
+        let new_keyboard = Self::create_inline_keyboard(menu, selected_options)?;
 
         match self
             .bot
@@ -335,7 +335,7 @@ pub async fn test_telegram_connection_with_api_url(
     api_url: Option<&str>
 ) -> Result<String> {
     if bot_token.trim().is_empty() {
-        return Err(anyhow::anyhow!("Bot Token不能为空"));
+        return Err(anyhow::anyhow!("Bot 密钥不能为空"));
     }
 
     if chat_id.trim().is_empty() {
@@ -359,7 +359,7 @@ pub async fn test_telegram_connection_with_api_url(
 
     // 发送测试消息
     let test_message =
-        "🤖 三术应用测试消息\n\n这是一条来自三术应用的测试消息，表示Telegram Bot配置成功！";
+        "🤖 DevKit Test Message\n\nThis is a test message from DevKit, indicating Telegram Bot configuration succeeded!";
 
     match bot.send_message(ChatId(chat_id_parsed), test_message).await {
         Ok(_) => Ok("测试消息发送成功！Telegram Bot配置正确。".to_string()),

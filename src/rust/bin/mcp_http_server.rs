@@ -2,17 +2,17 @@
 // This mode may bypass Windsurf's subprocess detection
 //
 // Usage:
-// 1. Start this server: sanshu-mcp-http
-// 2. Configure Windsurf mcp_config.json:
+// 1. Start this server: devkit-mcp-http
+// 2. Configure mcp_config.json:
 //    {
 //      "mcpServers": {
-//        "sanshu": {
+//        "devkit": {
 //          "serverUrl": "http://127.0.0.1:8808/sse"
 //        }
 //      }
 //    }
 
-use sanshu::{mcp::ZhiServer, utils::auto_init_logger, log_important};
+use devkit::{mcp::DevkitServer, utils::auto_init_logger, log_important};
 use axum::Router;
 use rmcp::transport::{StreamableHttpServerConfig, StreamableHttpService};
 use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let mcp_service = StreamableHttpService::new(
-        || Ok::<_, std::io::Error>(ZhiServer::new()),
+        || Ok::<_, std::io::Error>(DevkitServer::new()),
         session_manager,
         server_config,
     );
@@ -54,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_important!(info, "");
     log_important!(info, "=== Windsurf Configuration ===");
     log_important!(info, r#"Add to ~/.codeium/windsurf/mcp_config.json:"#);
-    log_important!(info, r#"{{"mcpServers": {{"sanshu": {{"serverUrl": "http://127.0.0.1:{}/sse"}}}}}}"#, port);
+    log_important!(info, r#"{{"mcpServers": {{"devkit": {{"serverUrl": "http://127.0.0.1:{}/sse"}}}}}}"#, port);
     log_important!(info, "");
     
     // Start server

@@ -287,11 +287,11 @@ impl AcemcpTool {
 
         if let serde_json::Value::Object(schema_map) = schema {
             Tool {
-                name: Cow::Borrowed("sou"),
-                description: Some(Cow::Borrowed("Search for relevant code context in a project using semantic queries. Returns formatted code snippets matching the query.")),
+                name: Cow::Borrowed("index"),
+                description: Some(Cow::Borrowed("Code indexing and search. Query indexed files to find relevant code snippets.")),
                 input_schema: Arc::new(schema_map),
                 annotations: Some(ToolAnnotations {
-                    title: Some("Code Search".to_string()),
+                    title: Some("Code Index".to_string()),
                     read_only_hint: Some(true),       // Only searches, doesn't modify
                     destructive_hint: Some(false),    // Not destructive
                     idempotent_hint: Some(true),      // Same query = same result
@@ -300,7 +300,7 @@ impl AcemcpTool {
                 icons: None,
                 meta: None,
                 output_schema: None,
-                title: Some("Code Search".to_string()),
+                title: Some("Code Index".to_string()),
             }
         } else {
             panic!("Schema creation failed");
@@ -1105,7 +1105,7 @@ pub(crate) async fn update_index(config: &AcemcpConfig, project_root_path: &str)
         anyhow::bail!("索引后未找到 blobs");
     }
 
-    // 检查是否是首次成功索引（用于 ji 集成）
+    // 检查是否是首次成功索引（用于 store 集成）
     let is_first_success = {
         let status = get_project_status(project_root_path);
         status.last_success_time.is_none()
@@ -1121,17 +1121,17 @@ pub(crate) async fn update_index(config: &AcemcpConfig, project_root_path: &str)
         status.last_error = None;
     });
 
-    // 首次成功索引时，写入 ji 记忆
+    // 首次成功索引时，写入 store 记忆
     if is_first_success {
-        let _ = write_index_memory_to_ji(project_root_path, config);
+        let _ = write_index_memory_to_store(project_root_path, config);
     }
 
     log_important!(info, "索引更新完成，共 {} 个 blobs", blob_names.len());
     Ok(blob_names)
 }
 
-/// 将索引配置信息写入 ji（记忆）工具
-fn write_index_memory_to_ji(project_root_path: &str, config: &AcemcpConfig) {
+/// 将索引配置信息写入 store（记忆）工具
+fn write_index_memory_to_store(project_root_path: &str, config: &AcemcpConfig) {
     use super::super::memory::MemoryManager;
     use super::super::memory::MemoryCategory;
 
@@ -1158,10 +1158,10 @@ fn write_index_memory_to_ji(project_root_path: &str, config: &AcemcpConfig) {
     // 写入记忆
     match manager.add_memory(&memory_content, MemoryCategory::Context) {
         Ok(id) => {
-            log_important!(info, "已将索引配置写入 ji 记忆: id={}", id);
+            log_important!(info, "已将索引配置写入 store 记忆: id={}", id);
         }
         Err(e) => {
-            log_debug!("写入 ji 记忆失败（不影响索引）: {}", e);
+            log_debug!("写入 store 记忆失败（不影响索引）: {}", e);
         }
     }
 }

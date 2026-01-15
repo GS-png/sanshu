@@ -8,24 +8,24 @@ use rmcp::{
 use rmcp::model::*;
 use std::collections::HashMap;
 
-use super::tools::{InteractionTool, MemoryTool, AcemcpTool, Context7Tool};
-use super::types::{ZhiRequest, JiyiRequest};
-use crate::mcp::tools::context7::types::Context7Request;
+use super::tools::{InteractionTool, MemoryTool, AcemcpTool, DocsTool};
+use super::types::{CacheRequest, StoreRequest};
+use crate::mcp::tools::docs::types::DocsRequest;
 use crate::config::load_standalone_config;
 use crate::{log_important, log_debug};
 
 #[derive(Clone)]
-pub struct ZhiServer {
+pub struct DevkitServer {
     enabled_tools: HashMap<String, bool>,
 }
 
-impl Default for ZhiServer {
+impl Default for DevkitServer {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ZhiServer {
+impl DevkitServer {
     pub fn new() -> Self {
         // Load config, use defaults on failure
         let enabled_tools = match load_standalone_config() {
@@ -57,19 +57,19 @@ impl ZhiServer {
     }
 }
 
-impl ServerHandler for ZhiServer {
+impl ServerHandler for DevkitServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: ProtocolVersion::V_2024_11_05,
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation {
-                name: "dev-utils".to_string(),
+                name: "build-cache".to_string(),
                 version: env!("CARGO_PKG_VERSION").to_string(),
                 icons: None,
                 title: None,
                 website_url: None,
             },
-            instructions: Some("Development utilities for project management".to_string()),
+            instructions: Some("Build cache and code indexing utilities".to_string()),
         }
     }
 
@@ -91,34 +91,34 @@ impl ServerHandler for ZhiServer {
 
         let mut tools = Vec::new();
 
-        // Async prompt tool - starts interaction and returns immediately
-        let prompt_schema = serde_json::json!({
+        // Cache tool - stores data for async retrieval
+        let cache_schema = serde_json::json!({
             "type": "object",
             "properties": {
                 "message": {
                     "type": "string",
-                    "description": "The content to display to the user"
+                    "description": "Data payload to cache"
                 },
                 "choices": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Optional list of response templates for user to choose"
+                    "description": "Optional metadata tags"
                 },
                 "format": {
                     "type": "boolean",
-                    "description": "Enable rich text formatting, defaults to true"
+                    "description": "Enable structured format, defaults to true"
                 }
             },
             "required": ["message"]
         });
 
-        if let serde_json::Value::Object(ref schema_map) = prompt_schema {
+        if let serde_json::Value::Object(ref schema_map) = cache_schema {
             tools.push(Tool {
-                name: Cow::Borrowed("prompt"),
-                description: Some(Cow::Borrowed("Start an interactive prompt. Returns a task_id immediately. IMPORTANT: Do NOT call prompt repeatedly. If a task is already pending, prompt will return the existing task_id. After the user completes input, call get_result with this task_id.")),
+                name: Cow::Borrowed("cache"),
+                description: Some(Cow::Borrowed("Write data to start an interactive task. Returns task_id immediately. Do NOT call repeatedly - if pending, returns existing task_id. After user completes, call cache_get with task_id.")),
                 input_schema: Arc::new(schema_map.clone()),
                 annotations: Some(ToolAnnotations {
-                    title: Some("Interactive Prompt".to_string()),
+                    title: Some("Cache Write".to_string()),
                     read_only_hint: Some(true),
                     destructive_hint: Some(false),
                     idempotent_hint: Some(false),    // Each call creates new task
@@ -127,18 +127,18 @@ impl ServerHandler for ZhiServer {
                 icons: None,
                 meta: None,
                 output_schema: None,
-                title: Some("Interactive Prompt".to_string()),
+                title: Some("Cache Write".to_string()),
             });
         }
 
-        // Sync prompt tool - blocks until user submits, returns result in one call
-        if let serde_json::Value::Object(ref schema_map) = prompt_schema {
+        // Sync cache tool - blocks until completion
+        if let serde_json::Value::Object(ref schema_map) = cache_schema {
             tools.push(Tool {
-                name: Cow::Borrowed("prompt_sync"),
-                description: Some(Cow::Borrowed("Start an interactive prompt and wait for user input. NOTE: To avoid long blocking, this may return WAITING after a configured time slice (SANSHU_GET_RESULT_WAIT_MS / MCP_GET_RESULT_WAIT_MS or UI setting interaction_wait_ms). If it returns WAITING, call get_result with the task_id to retrieve the final response after the user submits.")),
+                name: Cow::Borrowed("cache_sync"),
+                description: Some(Cow::Borrowed("Start interactive task and wait. May return PENDING after configured timeout. If PENDING, call cache_get with task_id.")),
                 input_schema: Arc::new(schema_map.clone()),
                 annotations: Some(ToolAnnotations {
-                    title: Some("Interactive Prompt (Sync)".to_string()),
+                    title: Some("Cache Write (Sync)".to_string()),
                     read_only_hint: Some(true),
                     destructive_hint: Some(false),
                     idempotent_hint: Some(false),
@@ -147,29 +147,29 @@ impl ServerHandler for ZhiServer {
                 icons: None,
                 meta: None,
                 output_schema: None,
-                title: Some("Interactive Prompt (Sync)".to_string()),
+                title: Some("Cache Write (Sync)".to_string()),
             });
         }
 
-        // Get result tool - polls for user response
-        let get_result_schema = serde_json::json!({
+        // Cache get tool - retrieves cached data
+        let cache_get_schema = serde_json::json!({
             "type": "object",
             "properties": {
                 "task_id": {
                     "type": "string",
-                    "description": "The task_id returned by the prompt tool"
+                    "description": "The task_id returned by cache/cache_sync tool"
                 }
             },
             "required": ["task_id"]
         });
 
-        if let serde_json::Value::Object(schema_map) = get_result_schema {
+        if let serde_json::Value::Object(schema_map) = cache_get_schema {
             tools.push(Tool {
-                name: Cow::Borrowed("get_result"),
-                description: Some(Cow::Borrowed("Get the result of a prompt. Call this after calling prompt to retrieve the user's response. If user hasn't responded yet, it returns WAITING. IMPORTANT: Do NOT auto-poll. Only call again after the user confirms they have finished input.")),
+                name: Cow::Borrowed("cache_get"),
+                description: Some(Cow::Borrowed("Get result of an interactive task. Call after cache/cache_sync with task_id. Returns PENDING if not ready. Do NOT auto-poll - only call after user confirms.")),
                 input_schema: Arc::new(schema_map),
                 annotations: Some(ToolAnnotations {
-                    title: Some("Get Prompt Result".to_string()),
+                    title: Some("Cache Read".to_string()),
                     read_only_hint: Some(true),
                     destructive_hint: Some(false),
                     idempotent_hint: Some(true),
@@ -178,12 +178,12 @@ impl ServerHandler for ZhiServer {
                 icons: None,
                 meta: None,
                 output_schema: None,
-                title: Some("Get Prompt Result".to_string()),
+                title: Some("Cache Read".to_string()),
             });
         }
 
         // Memory tool - only when enabled
-        if self.is_tool_enabled("ji") {
+        if self.is_tool_enabled("store") {
             let ji_schema = serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -207,13 +207,13 @@ impl ServerHandler for ZhiServer {
                 "required": ["action", "project_path"]
             });
 
-            if let serde_json::Value::Object(schema_map) = ji_schema {
+            if let serde_json::Value::Object(ref schema_map) = ji_schema {
                 tools.push(Tool {
-                    name: Cow::Borrowed("memory"),
-                    description: Some(Cow::Borrowed("Project memory storage for development context and preferences")),
-                    input_schema: Arc::new(schema_map),
+                    name: Cow::Borrowed("store"),
+                    description: Some(Cow::Borrowed("Key-value storage for build configuration and project metadata")),
+                    input_schema: Arc::new(schema_map.clone()),
                     annotations: Some(ToolAnnotations {
-                        title: Some("Project Memory".to_string()),
+                        title: Some("Config Store".to_string()),
                         read_only_hint: Some(false),     // Can modify (store data)
                         destructive_hint: Some(false),   // Not destructive, only additive
                         idempotent_hint: Some(true),     // Storing same data is idempotent
@@ -222,19 +222,19 @@ impl ServerHandler for ZhiServer {
                     icons: None,
                     meta: None,
                     output_schema: None,
-                    title: Some("Project Memory".to_string()),
+                    title: Some("Config Store".to_string()),
                 });
             }
         }
 
-        // Search tool - only when enabled
-        if self.is_tool_enabled("sou") {
+        // Index tool - only when enabled
+        if self.is_tool_enabled("index") {
             tools.push(AcemcpTool::get_tool_definition());
         }
 
-        // Context7 tool - only when enabled
-        if self.is_tool_enabled("context7") {
-            tools.push(Context7Tool::get_tool_definition());
+        // Docs tool - only when enabled
+        if self.is_tool_enabled("docs") {
+            tools.push(DocsTool::get_tool_definition());
         }
 
         log_debug!("Tools returned to client: {:?}", tools.iter().map(|t| &t.name).collect::<Vec<_>>());
@@ -254,28 +254,28 @@ impl ServerHandler for ZhiServer {
         log_debug!("Tool call request: {}", request.name);
 
         match request.name.as_ref() {
-            "prompt" => {
+            "cache" => {
                 let arguments_value = request.arguments
                     .map(serde_json::Value::Object)
                     .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
-                let zhi_request: ZhiRequest = serde_json::from_value(arguments_value)
+                let cache_request: CacheRequest = serde_json::from_value(arguments_value)
                     .map_err(|e| McpError::invalid_params(format!("Parameter parse error: {}", e), None))?;
 
                 // Use async version that returns immediately
-                InteractionTool::prompt_start(zhi_request).await
+                InteractionTool::prompt_start(cache_request).await
             }
-            "prompt_sync" => {
+            "cache_sync" => {
                 let arguments_value = request.arguments
                     .map(serde_json::Value::Object)
                     .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
-                let zhi_request: ZhiRequest = serde_json::from_value(arguments_value)
+                let cache_request: CacheRequest = serde_json::from_value(arguments_value)
                     .map_err(|e| McpError::invalid_params(format!("Parameter parse error: {}", e), None))?;
 
-                InteractionTool::prompt_sync(zhi_request).await
+                InteractionTool::prompt_sync(cache_request).await
             }
-            "get_result" => {
+            "cache_get" => {
                 let arguments_value = request.arguments
                     .map(serde_json::Value::Object)
                     .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
@@ -285,11 +285,11 @@ impl ServerHandler for ZhiServer {
                     .map(|s| s.to_string())
                     .ok_or_else(|| McpError::invalid_params("task_id is required".to_string(), None))?;
 
-                InteractionTool::get_result(task_id).await
+                InteractionTool::cache_get(task_id).await
             }
-            "memory" => {
-                // Check if memory tool is enabled
-                if !self.is_tool_enabled("ji") {
+            "store" => {
+                // Check if store tool is enabled
+                if !self.is_tool_enabled("store") {
                     return Err(McpError::internal_error(
                         "Memory tool is disabled".to_string(),
                         None
@@ -300,13 +300,13 @@ impl ServerHandler for ZhiServer {
                     .map(serde_json::Value::Object)
                     .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
-                let ji_request: JiyiRequest = serde_json::from_value(arguments_value)
+                let store_request: StoreRequest = serde_json::from_value(arguments_value)
                     .map_err(|e| McpError::invalid_params(format!("Parameter parse error: {}", e), None))?;
 
-                MemoryTool::jiyi(ji_request).await
+                MemoryTool::store(store_request).await
             }
-            "sou" => {
-                if !self.is_tool_enabled("sou") {
+            "index" => {
+                if !self.is_tool_enabled("index") {
                     return Err(McpError::internal_error(
                         "Search tool is disabled".to_string(),
                         None
@@ -322,10 +322,10 @@ impl ServerHandler for ZhiServer {
 
                 AcemcpTool::search_context(acemcp_request).await
             }
-            "context7" => {
-                if !self.is_tool_enabled("context7") {
+            "docs" => {
+                if !self.is_tool_enabled("docs") {
                     return Err(McpError::internal_error(
-                        "Context7 tool is disabled".to_string(),
+                        "Docs tool is disabled".to_string(),
                         None
                     ));
                 }
@@ -334,10 +334,10 @@ impl ServerHandler for ZhiServer {
                     .map(serde_json::Value::Object)
                     .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
-                let context7_request: Context7Request = serde_json::from_value(arguments_value)
+                let docs_request: DocsRequest = serde_json::from_value(arguments_value)
                     .map_err(|e| McpError::invalid_params(format!("Parameter parse error: {}", e), None))?;
 
-                Context7Tool::query_docs(context7_request).await
+                DocsTool::query_docs(docs_request).await
             }
             _ => {
                 Err(McpError::invalid_request(
@@ -349,11 +349,9 @@ impl ServerHandler for ZhiServer {
     }
 }
 
-
-
 /// Start MCP server
 pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
-    let service = ZhiServer::new()
+    let service = DevkitServer::new()
         .serve(stdio())
         .await
         .inspect_err(|e| {

@@ -33,38 +33,38 @@ pub async fn get_mcp_tools_config(state: State<'_, AppState>) -> Result<Vec<MCPT
     // 动态构建工具配置列表
     let mut tools = Vec::new();
     
-    // prompt工具 - 始终存在，无配置选项
+    // Cache tool
     tools.push(MCPToolConfig {
-        id: mcp::TOOL_ZHI.to_string(),
-        name: "Prompt".to_string(),
-        description: "Display content with configurable response templates".to_string(),
-        enabled: config.mcp_config.tools.get(mcp::TOOL_ZHI).copied().unwrap_or(true),
-        can_disable: false, // 三术工具是必需的
-        icon: "i-carbon-chat text-lg text-blue-600 dark:text-blue-400".to_string(),
+        id: mcp::TOOL_CACHE.to_string(),
+        name: "Cache".to_string(),
+        description: "Build cache for data storage and retrieval".to_string(),
+        enabled: config.mcp_config.tools.get(mcp::TOOL_CACHE).copied().unwrap_or(true),
+        can_disable: false,
+        icon: "i-carbon-data-backup text-lg text-blue-600 dark:text-blue-400".to_string(),
         icon_bg: "bg-blue-100 dark:bg-blue-900".to_string(),
         dark_icon_bg: "dark:bg-blue-800".to_string(),
-        has_config: false, // 三术工具没有配置选项
+        has_config: false,
     });
     
-    // 记忆管理工具 - 始终存在，无配置选项
+    // Store tool
     tools.push(MCPToolConfig {
-        id: mcp::TOOL_JI.to_string(),
-        name: "记忆管理".to_string(),
-        description: "全局记忆管理工具，用于存储和管理重要的开发规范、用户偏好和最佳实践".to_string(),
-        enabled: config.mcp_config.tools.get(mcp::TOOL_JI).copied().unwrap_or(true), // 修复：默认启用，与 default_mcp_tools() 保持一致
+        id: mcp::TOOL_STORE.to_string(),
+        name: "Store".to_string(),
+        description: "Key-value store for project configuration".to_string(),
+        enabled: config.mcp_config.tools.get(mcp::TOOL_STORE).copied().unwrap_or(true),
         can_disable: true,
         icon: "i-carbon-data-base text-lg text-purple-600 dark:text-purple-400".to_string(),
         icon_bg: "bg-green-100 dark:bg-green-900".to_string(),
         dark_icon_bg: "dark:bg-green-800".to_string(),
-        has_config: false, // 记忆管理工具没有配置选项
+        has_config: false,
     });
     
-    // 代码搜索工具 - 始终存在，有配置选项
+    // Index tool
     tools.push(MCPToolConfig {
-        id: mcp::TOOL_SOU.to_string(),
-        name: "代码搜索".to_string(),
-        description: "基于查询在特定项目中搜索相关的代码上下文，支持语义搜索和增量索引".to_string(),
-        enabled: config.mcp_config.tools.get(mcp::TOOL_SOU).copied().unwrap_or(false),
+        id: mcp::TOOL_INDEX.to_string(),
+        name: "Index".to_string(),
+        description: "Code indexing for fast file lookup".to_string(),
+        enabled: config.mcp_config.tools.get(mcp::TOOL_INDEX).copied().unwrap_or(false),
         can_disable: true,
         icon: "i-carbon-search text-lg text-green-600 dark:text-green-400".to_string(),
         icon_bg: "bg-green-100 dark:bg-green-900".to_string(),
@@ -72,17 +72,17 @@ pub async fn get_mcp_tools_config(state: State<'_, AppState>) -> Result<Vec<MCPT
         has_config: true, // 代码搜索工具有配置选项
     });
 
-    // Context7 文档查询工具 - 始终存在，有配置选项
+    // Docs tool
     tools.push(MCPToolConfig {
-        id: mcp::TOOL_CONTEXT7.to_string(),
-        name: "Context7 文档查询".to_string(),
-        description: "查询最新的框架和库文档，支持 Next.js、React、Vue、Spring 等主流框架".to_string(),
-        enabled: config.mcp_config.tools.get(mcp::TOOL_CONTEXT7).copied().unwrap_or(true),
+        id: mcp::TOOL_DOCS.to_string(),
+        name: "Docs".to_string(),
+        description: "Documentation lookup for libraries".to_string(),
+        enabled: config.mcp_config.tools.get(mcp::TOOL_DOCS).copied().unwrap_or(true),
         can_disable: true,
         icon: "i-carbon-document text-lg text-orange-600 dark:text-orange-400".to_string(),
         icon_bg: "bg-orange-100 dark:bg-orange-900".to_string(),
         dark_icon_bg: "dark:bg-orange-800".to_string(),
-        has_config: true, // Context7 工具有配置选项
+        has_config: true, // Docs 工具有配置选项
     });
 
     // 按启用状态排序，启用的在前
@@ -103,8 +103,8 @@ pub async fn set_mcp_tool_enabled(
         let mut config = state.config.lock().map_err(|e| format!("获取配置失败: {}", e))?;
         
         // 检查工具是否可以禁用
-        if tool_id == mcp::TOOL_ZHI && !enabled {
-            return Err("Prompt工具是必需的，无法禁用".to_string());
+        if tool_id == mcp::TOOL_CACHE && !enabled {
+            return Err("Cache tool is required and cannot be disabled".to_string());
         }
         
         // 更新工具状态
@@ -179,23 +179,23 @@ pub async fn set_interaction_wait_ms(
 }
 
 #[tauri::command]
-pub async fn list_mcp_history_entries(limit: Option<u32>) -> Result<Vec<HistoryEntrySummary>, String> {
+pub async fn list_bistro_journal_entries(limit: Option<u32>) -> Result<Vec<HistoryEntrySummary>, String> {
     let limit = limit.unwrap_or(200).min(2000) as usize;
     list_history_entries(limit).map_err(|e| format!("获取历史记录失败: {}", e))
 }
 
 #[tauri::command]
-pub async fn get_mcp_history_entry(id: String) -> Result<HistoryEntryDetail, String> {
+pub async fn get_bistro_journal_entry(id: String) -> Result<HistoryEntryDetail, String> {
     get_history_entry(id).map_err(|e| format!("获取历史详情失败: {}", e))
 }
 
 #[tauri::command]
-pub async fn delete_mcp_history_entry(id: String) -> Result<(), String> {
+pub async fn delete_bistro_journal_entry(id: String) -> Result<(), String> {
     delete_history_entry(id).map_err(|e| format!("删除历史记录失败: {}", e))
 }
 
 #[tauri::command]
-pub async fn delete_mcp_history_by_time_range(
+pub async fn delete_bistro_journal_by_time_range(
     start: Option<String>,
     end: Option<String>,
 ) -> Result<u32, String> {
@@ -204,7 +204,7 @@ pub async fn delete_mcp_history_by_time_range(
 }
 
 #[tauri::command]
-pub async fn export_mcp_history_entry_zip(id: String) -> Result<String, String> {
+pub async fn export_bistro_journal_entry_zip(id: String) -> Result<String, String> {
     let target_dir: PathBuf = dirs::download_dir()
         .or_else(dirs::data_dir)
         .or_else(dirs::config_dir)
@@ -216,7 +216,7 @@ pub async fn export_mcp_history_entry_zip(id: String) -> Result<String, String> 
 }
 
 #[tauri::command]
-pub async fn export_mcp_history_by_time_range_zip(
+pub async fn export_bistro_journal_by_time_range_zip(
     start: Option<String>,
     end: Option<String>,
 ) -> Result<String, String> {

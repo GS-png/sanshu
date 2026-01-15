@@ -7,28 +7,28 @@ use std::borrow::Cow;
 use std::sync::Arc;
 use std::time::Duration;
 
-use super::types::{Context7Request, Context7Config, SearchResponse, SearchResult};
+use super::types::{DocsRequest, DocsConfig, SearchResponse, SearchResult, docs_api_base_url, docs_website_url};
 use crate::log_debug;
 use crate::log_important;
 
-/// Context7 tool implementation
-pub struct Context7Tool;
+/// Docs tool implementation
+pub struct DocsTool;
 
-impl Context7Tool {
+impl DocsTool {
     /// Query framework documentation
-    pub async fn query_docs(request: Context7Request) -> Result<CallToolResult, McpError> {
+    pub async fn query_docs(request: DocsRequest) -> Result<CallToolResult, McpError> {
         log_important!(info,
-            "Context7 query: library={}, topic={:?}, version={:?}, page={:?}",
+            "Docs query: library={}, topic={:?}, version={:?}, page={:?}",
             request.library, request.topic, request.version, request.page
         );
 
         let config = Self::get_config()
             .await
-            .map_err(|e| McpError::internal_error(format!("Failed to get Context7 config: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Failed to get docs config: {}", e), None))?;
 
         match Self::fetch_docs(&config, &request).await {
             Ok(result) => {
-                log_important!(info, "Context7 query success");
+                log_important!(info, "Docs query success");
                 Ok(CallToolResult {
                     content: vec![Content::text(result)],
                     is_error: Some(false),
@@ -37,7 +37,7 @@ impl Context7Tool {
                 })
             }
             Err(e) => {
-                let error_msg = format!("Context7 query failed: {}", e);
+                let error_msg = format!("Docs query failed: {}", e);
                 log_important!(warn, "{}", error_msg);
                 Ok(CallToolResult {
                     content: vec![Content::text(error_msg)],
@@ -78,11 +78,11 @@ impl Context7Tool {
 
         if let serde_json::Value::Object(schema_map) = schema {
             Tool {
-                name: Cow::Borrowed("context7"),
-                description: Some(Cow::Borrowed("Query framework and library documentation. Supports Next.js, React, Vue, Spring, etc.")),
+                name: Cow::Borrowed("docs"),
+                description: Some(Cow::Borrowed("Documentation lookup for libraries and frameworks.")),
                 input_schema: Arc::new(schema_map),
                 annotations: Some(ToolAnnotations {
-                    title: Some("Documentation Query".to_string()),
+                    title: Some("Docs Lookup".to_string()),
                     read_only_hint: Some(true),       // Only reads external docs
                     destructive_hint: Some(false),    // Not destructive
                     idempotent_hint: Some(true),      // Same query = same result
@@ -91,7 +91,7 @@ impl Context7Tool {
                 icons: None,
                 meta: None,
                 output_schema: None,
-                title: Some("Documentation Query".to_string()),
+                title: Some("Docs Lookup".to_string()),
             }
         } else {
             panic!("Schema creation failed");
@@ -99,24 +99,24 @@ impl Context7Tool {
     }
 
     /// Get config
-    async fn get_config() -> Result<Context7Config> {
+    async fn get_config() -> Result<DocsConfig> {
         let config = crate::config::load_standalone_config()
             .map_err(|e| anyhow::anyhow!("Failed to read config: {}", e))?;
 
-        Ok(Context7Config {
-            api_key: config.mcp_config.context7_api_key,
-            base_url: "https://context7.com/api/v2".to_string(),
+        Ok(DocsConfig {
+            api_key: config.mcp_config.docs_api_key,
+            base_url: docs_api_base_url(),
         })
     }
 
     /// Fetch docs via HTTP
-    async fn fetch_docs(config: &Context7Config, request: &Context7Request) -> Result<String> {
+    async fn fetch_docs(config: &DocsConfig, request: &DocsRequest) -> Result<String> {
         let client = Client::builder()
             .timeout(Duration::from_secs(30))
             .build()?;
 
         let url = format!("{}/docs/code/{}", config.base_url, request.library);
-        log_debug!("Context7 request URL: {}", url);
+        log_debug!("Docs request URL: {}", url);
 
         let mut req_builder = client.get(&url);
 
@@ -140,7 +140,7 @@ impl Context7Tool {
         let response = req_builder.send().await?;
         let status = response.status();
 
-        log_debug!("Context7 response status: {}", status);
+        log_debug!("Docs response status: {}", status);
 
         if !status.is_success() {
             let error_text = response.text().await.unwrap_or_else(|_| "Unable to read error".to_string());
@@ -172,13 +172,13 @@ impl Context7Tool {
             401 => "Invalid or expired API key".to_string(),
             404 => format!("Library not found: {}", error_text),
             429 => "Rate limit reached, consider configuring an API Key".to_string(),
-            500..=599 => format!("Context7 server error: {}", error_text),
+            500..=599 => format!("Docs server error: {}", error_text),
             _ => error_text.to_string(),
         }
     }
 
     /// Format text response to Markdown
-    fn format_text_response(content: &str, request: &Context7Request) -> String {
+    fn format_text_response(content: &str, request: &DocsRequest) -> String {
         let mut output = String::new();
 
         output.push_str(&format!("# {} Documentation\n\n", request.library));
@@ -196,15 +196,15 @@ impl Context7Tool {
 
         output.push_str(content);
 
-        output.push_str(&format!("\n\n---\nSource: Context7 - {}\n", request.library));
+        output.push_str(&format!("\n\n---\nSource: Docs - {}\n", request.library));
 
         output
     }
 
     /// Handle 404 error: search for candidate libraries
     async fn handle_not_found_with_search(
-        config: &Context7Config,
-        request: &Context7Request,
+        config: &DocsConfig,
+        request: &DocsRequest,
     ) -> Result<String> {
         let search_query = if request.library.contains('/') {
             request.library.split('/').last().unwrap_or(&request.library)
@@ -230,13 +230,13 @@ impl Context7Tool {
     }
 
     /// Search libraries
-    async fn search_libraries(config: &Context7Config, query: &str) -> Result<Vec<SearchResult>> {
+    async fn search_libraries(config: &DocsConfig, query: &str) -> Result<Vec<SearchResult>> {
         let client = Client::builder()
             .timeout(Duration::from_secs(15))
             .build()?;
 
         let url = format!("{}/search", config.base_url);
-        log_debug!("Context7 search URL: {}", url);
+        log_debug!("Docs search URL: {}", url);
 
         let mut req_builder = client.get(&url).query(&[("query", query)]);
 
@@ -260,14 +260,16 @@ impl Context7Tool {
 
     /// Format 404 error message (no suggestions)
     fn format_not_found_no_suggestions(library: &str) -> String {
+        let website = docs_website_url();
         format!(
             "**Library \"{}\" not found**\n\n\
             Please check the library identifier. Format: `owner/repo`, e.g.:\n\
             - `vercel/next.js`\n\
             - `facebook/react`\n\
             - `spring-projects/spring-framework`\n\n\
-            Tip: Search for libraries at [Context7](https://context7.com)",
-            library
+            Tip: Search for libraries at [Docs]({})",
+            library,
+            website
         )
     }
 

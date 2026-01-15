@@ -80,8 +80,8 @@ export function useMcpHandler() {
       if (request?.message) {
         await invoke('start_telegram_sync', {
           message: request.message,
-          predefinedOptions: request.predefined_options || [],
-          isMarkdown: request.is_markdown || false,
+          menu: request.menu || [],
+          chalkboard: request.chalkboard || false,
         })
         console.log('✅ Telegram同步启动成功')
       }

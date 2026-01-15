@@ -94,8 +94,8 @@ pub async fn check_for_updates(app: AppHandle, state: State<'_, AppState>) -> Re
     log::info!("📡 发送 GitHub API 请求");
 
     let response = client
-        .get("https://api.github.com/repos/yuaotian/sanshu/releases/latest")
-        .header("User-Agent", "sanshu-app/1.0")
+        .get("https://api.github.com/repos/aspect-build/devkit/releases/latest")
+        .header("User-Agent", "devkit-app/1.0")
         .header("Accept", "application/vnd.github.v3+json")
         .send()
         .await
@@ -336,7 +336,7 @@ async fn download_and_install_update_impl(
     log::info!("📥 开始下载文件: {}", update_info.download_url);
 
     // 创建临时目录
-    let temp_dir = std::env::temp_dir().join("sanshu_update");
+    let temp_dir = std::env::temp_dir().join("devkit_update");
     fs::create_dir_all(&temp_dir)
         .map_err(|e| format!("创建临时目录失败: {}", e))?;
 
@@ -539,7 +539,7 @@ async fn install_from_archive(file_path: &PathBuf) -> Result<(), String> {
     log::info!("📂 应用程序目录: {}", app_dir.display());
 
     // 创建临时解压目录
-    let temp_dir = std::env::temp_dir().join("sanshu_extract");
+    let temp_dir = std::env::temp_dir().join("devkit_extract");
     if temp_dir.exists() {
         fs::remove_dir_all(&temp_dir)
             .map_err(|e| format!("清理临时目录失败: {}", e))?;
@@ -727,7 +727,7 @@ fn replace_all_files_windows(
         .map_err(|e| format!("无法获取当前可执行文件路径: {}", e))?;
     let exe_name = current_exe.file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or("sanshu-ui.exe");
+        .unwrap_or("devkit-ui.exe");
 
     let script_path = app_dir.join("update_script.bat");
 
@@ -737,7 +737,7 @@ fn replace_all_files_windows(
     // 脚本头部：设置编码和关闭回显
     script_lines.push("@echo off".to_string());
     script_lines.push("chcp 65001 >nul".to_string());
-    script_lines.push("echo 正在更新 sanshu...".to_string());
+    script_lines.push("echo Updating devkit...".to_string());
     script_lines.push("timeout /t 2 /nobreak >nul".to_string());
     script_lines.push("".to_string());
 
